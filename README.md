@@ -13,6 +13,81 @@ A simplified Model Context Protocol (MCP) server running on Cloudflare Workers t
 - **MCP Protocol Support**: Supports both SSE and JSON-RPC transports
 - **Cloudflare Workers**: Serverless deployment with global edge distribution
 
+## Configure your AI client
+
+Use the hosted endpoint for this OpenFeature MCP worker: `https://mcp-openfeature.devcycle.com/mcp`
+
+No authentication is required for this MCP.
+
+### Cursor
+
+Add to `~/.cursor/mcp_settings.json`:
+
+```json
+{
+  "mcpServers": {
+    "OpenFeature": {
+      "url": "https://mcp-openfeature.devcycle.com/mcp"
+    }
+  }
+}
+```
+
+### VS Code (Continue)
+
+Add to `.continue/config.json`:
+
+```json
+{
+  "mcpServers": {
+    "OpenFeature": {
+      "url": "https://mcp-openfeature.devcycle.com/mcp"
+    }
+  }
+}
+```
+
+### Claude Code (CLI)
+
+```bash
+claude mcp add --transport http openfeature https://mcp-openfeature.devcycle.com/mcp
+```
+
+Then manage the connection in the CLI with `/mcp`.
+
+### Claude Desktop
+
+Edit your Claude Desktop config and add:
+
+```json
+{
+  "mcpServers": {
+    "openfeature": {
+      "command": "npx",
+      "args": ["mcp-remote", "https://mcp-openfeature.devcycle.com/mcp"]
+    }
+  }
+}
+```
+
+Restart Claude Desktop after saving.
+
+### Windsurf
+
+In the "Manage MCP servers" raw config, add:
+
+```json
+{
+  "mcpServers": {
+    "OpenFeature": {
+      "serverUrl": "https://mcp-openfeature.devcycle.com/mcp"
+    }
+  }
+}
+```
+
+Reference installation patterns adapted from the DevCycle MCP getting started guide [DevCycle MCP Getting Started](https://docs.devcycle.com/cli-mcp/mcp-getting-started).
+
 ## Available Tools
 
 ### `install_openfeature_sdk`
