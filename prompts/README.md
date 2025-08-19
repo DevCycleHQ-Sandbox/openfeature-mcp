@@ -1,5 +1,11 @@
 # OpenFeature Install Prompts
 
+### Warning
+
+This folder is in active development and intended for testing only. Prompts and content may change without notice. Do not use in production yet.
+
+Note: The contents under `devcycle-prompts/` are still DevCycle-specific and will be updated to be OpenFeature-focused. Use the top-level prompts in this folder for canonical OpenFeature SDK install guides.
+
 This folder contains OpenFeature SDK installation guides that are bundled into the worker at build time.
 
 ## Structure
