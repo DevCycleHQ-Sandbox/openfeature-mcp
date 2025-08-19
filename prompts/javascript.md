@@ -148,6 +148,56 @@ const multiProvider = new MultiProvider(
 OpenFeature.setProvider(multiProvider);
 ```
 
+### Logging
+
+Override default console logging by providing a custom logger globally or per client.
+
+```javascript
+import { OpenFeature } from '@openfeature/web-sdk';
+
+// Any object implementing the Logger interface is supported; console is acceptable
+const logger = console;
+
+// Set a global logger (applies to all clients unless overridden)
+OpenFeature.setLogger(logger);
+
+// Or set a client-specific logger
+const client = OpenFeature.getClient();
+client.setLogger(logger);
+```
+
+Reference: [Logging (OpenFeature Web SDK)](https://openfeature.dev/docs/reference/technologies/client/web/#logging)
+
+### Tracking
+
+Associate user actions with feature flag evaluations to support experimentation and analytics. Evaluate a flag, then record relevant events using `client.track`.
+
+```javascript
+import { OpenFeature } from '@openfeature/web-sdk';
+
+const client = OpenFeature.getClient();
+
+// Evaluate a flag
+const enabled = await client.getBooleanValue('new-feature', false);
+
+// Use the feature, then track an event related to its usage
+if (enabled) {
+  useNewFeature();
+  client.track('new-feature-used');
+}
+
+// Optionally include properties
+client.track('cta-clicked', { cta: 'signup' });
+```
+
+Reference: [Tracking (OpenFeature Web SDK)](https://openfeature.dev/docs/reference/technologies/client/web/#tracking)
+
+### Shutdown
+
+Gracefully clean up all registered providers when your app is torn down. Call `OpenFeature.close()` during your app’s shutdown sequence.
+
+Reference: [Shutdown (OpenFeature Web SDK)](https://openfeature.dev/docs/reference/technologies/client/web/#shutdown)
+
 ## Troubleshooting
 
 - **Provider not ready / values are defaults**: Ensure you set the provider early in app startup and, if needed, `await OpenFeature.setProviderAndWait(...)` before evaluations.
