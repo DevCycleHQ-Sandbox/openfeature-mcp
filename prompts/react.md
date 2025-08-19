@@ -25,6 +25,8 @@ Reference: OpenFeature React SDK docs [OpenFeature React SDK](https://openfeatur
 
 ### 1. Install the OpenFeature React SDK
 
+Install the React SDK and required peer dependencies.
+
 ```bash
 # npm
 npm install --save @openfeature/react-sdk
@@ -44,6 +46,8 @@ Required peer dependencies (per docs):
 Import everything from `@openfeature/react-sdk` (it re-exports web/core) [OpenFeature React SDK](https://openfeature.dev/docs/reference/technologies/client/web/react).
 
 ### 2. Set up OpenFeature with the InMemoryProvider (default)
+
+Initialize OpenFeature early and set the in-memory provider for local/example use.
 
 Add this to your entry point or `App` component file.
 
@@ -91,6 +95,8 @@ Note: You do not need to await provider initialization; the React SDK will handl
 
 ### 3. Evaluate flags with hooks
 
+Use React hooks to read feature flags and react to changes.
+
 ```javascript
 import { useFlag, useBooleanFlagValue } from '@openfeature/react-sdk';
 
@@ -103,6 +109,8 @@ function Page() {
 ```
 
 ### 4. Update the evaluation context
+
+Provide user attributes via the evaluation context to enable user targeting of your feature flags.
 
 ```javascript
 import { OpenFeature } from '@openfeature/react-sdk';
