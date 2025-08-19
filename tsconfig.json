@@ -1,0 +1,43 @@
+{
+    "compilerOptions": {
+        "target": "ES2022",
+        "module": "ES2022",
+        "moduleResolution": "bundler",
+        "allowSyntheticDefaultImports": true,
+        "esModuleInterop": true,
+        "allowJs": true,
+        "checkJs": false,
+        "declaration": true,
+        "declarationMap": true,
+        "emitDeclarationOnly": false,
+        "isolatedModules": true,
+        "verbatimModuleSyntax": false,
+        "strict": true,
+        "noUnusedLocals": false,
+        "noUnusedParameters": false,
+        "exactOptionalPropertyTypes": false,
+        "noImplicitReturns": true,
+        "noFallthroughCasesInSwitch": true,
+        "noUncheckedIndexedAccess": false,
+        "noImplicitOverride": true,
+        "useUnknownInCatchVariables": true,
+        "forceConsistentCasingInFileNames": true,
+        "skipLibCheck": true,
+        "outDir": "./dist",
+        "rootDir": "./src",
+        "lib": [
+            "ES2022"
+        ],
+        "types": [
+            "@types/node"
+        ]
+    },
+    "include": [
+        "src/**/*",
+        "worker-configuration.d.ts"
+    ],
+    "exclude": [
+        "node_modules",
+        "dist"
+    ]
+}
