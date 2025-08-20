@@ -1,6 +1,6 @@
 # OpenFeature Web SDK Installation Prompt
 
-You are helping to install and configure the OpenFeature Web SDK for browser-based JavaScript/TypeScript applications. This guide focuses on installing and wiring up the OpenFeature SDK. If no provider is specified, use an example `InMemoryProvider` to get started.
+You are helping to install and configure the OpenFeature Web SDK for browser-based JavaScript/TypeScript applications. This guide focuses on installing and wiring up the OpenFeature SDK. If no provider is specified, default to the simple `InMemoryProvider` to get started. Do not install any feature flags as part of this process, the user can ask for you to do that later.
 
 **Do not use this for:**
 
@@ -50,23 +50,34 @@ const flagConfig = {
       on: true,
       off: false,
     },
-    defaultVariant: 'off',
-    contextEvaluator: (context) => {
-      if (context?.silly) {
-        return 'on';
-      }
-      return 'off';
-    },
+    defaultVariant: 'on',
   },
 };
 
+// Replace with provider from: https://openfeature.dev/ecosystem/
 const inMemoryProvider = new InMemoryProvider(flagConfig);
 
 // Optionally await readiness: await OpenFeature.setProviderAndWait(inMemoryProvider);
 OpenFeature.setProvider(inMemoryProvider);
 ```
 
-### 3. Evaluate flags with the client
+### 3. Update the evaluation context
+
+Provide user attributes via the evaluation context to enable user targeting of your feature flags.
+
+```javascript
+import { OpenFeature } from '@openfeature/web-sdk';
+
+async function onLogin(userId, email) {
+  await OpenFeature.setContext({ targetingKey: userId, email, authenticated: true });
+}
+
+async function onLogout() {
+  await OpenFeature.setContext({ targetingKey: `anon-${Date.now()}`, anonymous: true });
+}
+```
+
+### 4. Evaluate flags with the client
 
 Get the OpenFeature client and evaluate feature flag values.
 
@@ -90,23 +101,9 @@ async function run() {
 run();
 ```
 
-### 4. Update the evaluation context
-
-Provide user attributes via the evaluation context to enable user targeting of your feature flags.
-
-```javascript
-import { OpenFeature } from '@openfeature/web-sdk';
-
-async function onLogin(userId, email) {
-  await OpenFeature.setContext({ targetingKey: userId, email, authenticated: true });
-}
-
-async function onLogout() {
-  await OpenFeature.setContext({ targetingKey: `anon-${Date.now()}`, anonymous: true });
-}
-```
-
 ## Optional advanced usage
+
+Only implement the following optional sections if requested.
 
 ### Multi-Provider (combine multiple providers)
 
@@ -205,17 +202,12 @@ Reference: [Shutdown (OpenFeature Web SDK)](https://openfeature.dev/docs/referen
 - **Imports**: Import from `@openfeature/web-sdk` for web/browser apps.
 - **Bundling issues**: Ensure your bundler supports ESM.
 
+## Helpful resources
+
+- OpenFeature Web SDK docs: [OpenFeature Web SDK](https://openfeature.dev/docs/reference/technologies/client/web)
+
 ## Next steps
 
 - If you want a real provider, specify which provider(s) to install now; otherwise continue with the example `InMemoryProvider`.
 - Add more flags and wire UI to feature decisions.
 - Consider using the Multi-Provider to aggregate multiple sources.
-
-## Helpful resources
-
-- OpenFeature Web SDK docs: [OpenFeature Web SDK](https://openfeature.dev/docs/reference/technologies/client/web)
-
-## Support
-
-- Check the documentation linked above
-- Ask questions in the OpenFeature community

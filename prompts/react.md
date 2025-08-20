@@ -1,6 +1,6 @@
 # OpenFeature React SDK Installation Prompt
 
-You are helping to install and configure the OpenFeature React SDK for React web applications. This guide focuses on installing and wiring up the OpenFeature SDK. If no provider is specified, default to the simple `InMemoryProvider` to get started.
+You are helping to install and configure the OpenFeature React SDK for React web applications. This guide focuses on installing and wiring up the OpenFeature SDK. If no provider is specified, default to the simple `InMemoryProvider` to get started. Do not install any feature flags as part of this process, the user can ask for you to do that later.
 
 **Do not use this for:**
 
@@ -38,16 +38,9 @@ yarn add @openfeature/react-sdk @openfeature/web-sdk @openfeature/core
 pnpm add @openfeature/react-sdk @openfeature/web-sdk @openfeature/core
 ```
 
-Required peer dependencies (per docs):
+### 2. Set up OpenFeature with the example InMemoryProvider
 
-- `@openfeature/web-sdk`
-- `react`
-
-Import everything from `@openfeature/react-sdk` (it re-exports web/core) [OpenFeature React SDK](https://openfeature.dev/docs/reference/technologies/client/web/react).
-
-### 2. Set up OpenFeature with the InMemoryProvider (default)
-
-Initialize OpenFeature early and set the in-memory provider for local/example use.
+Initialize OpenFeature early and set the example in-memory provider.
 
 Add this to your entry point or `App` component file.
 
@@ -62,13 +55,7 @@ const flagConfig = {
       on: true,
       off: false,
     },
-    defaultVariant: 'off',
-    contextEvaluator: (context) => {
-      if (context.silly) {
-        return 'on';
-      }
-      return 'off';
-    },
+    defaultVariant: 'on',
   },
 };
 
@@ -93,22 +80,7 @@ export default App;
 
 Note: You do not need to await provider initialization; the React SDK will handle re-rendering and suspense when the provider is ready [OpenFeature React SDK](https://openfeature.dev/docs/reference/technologies/client/web/react).
 
-### 3. Evaluate flags with hooks
-
-Use React hooks to read feature flags and react to changes.
-
-```javascript
-import { useFlag, useBooleanFlagValue } from '@openfeature/react-sdk';
-
-function Page() {
-  const { value: showNewMessage } = useFlag('new-message', false);
-  const isOn = useBooleanFlagValue('new-message', false);
-
-  return <>{showNewMessage && isOn ? <p>Welcome!</p> : <p>Hello</p>}</>;
-}
-```
-
-### 4. Update the evaluation context
+### 3. Update the evaluation context
 
 Provide user attributes via the evaluation context to enable user targeting of your feature flags.
 
@@ -124,7 +96,24 @@ async function onLogout() {
 }
 ```
 
+### 4. Evaluate flags with hooks
+
+Optionally, if requested by the user: use React hooks to read feature flags and react to changes.
+
+```javascript
+import { useFlag, useBooleanFlagValue } from '@openfeature/react-sdk';
+
+function Page() {
+  const { value: showNewMessage } = useFlag('new-message', false);
+  const isOn = useBooleanFlagValue('new-message', false);
+
+  return <>{showNewMessage && isOn ? <p>Welcome!</p> : <p>Hello</p>}</>;
+}
+```
+
 ## Optional advanced usage
+
+Only implement the following optional sections if requested.
 
 ### Multi-Provider (combine multiple providers)
 
@@ -252,17 +241,13 @@ import { OpenFeatureTestProvider } from '@openfeature/react-sdk';
 - **Multiple providers share state**: Set a distinct `domain` on each `OpenFeatureProvider`.
 - **Imports**: Import from `@openfeature/react-sdk` (it re-exports web/core).
 
-## Next steps
-
-- If you want a real provider, specify which provider(s) to install now; otherwise continue with `InMemoryProvider`.
-- Add more flags and wire UI with `useFlag`/typed hooks.
-- Consider tracking with `useTrack` and add tests with `OpenFeatureTestProvider`.
-
 ## Helpful resources
 
 - OpenFeature React SDK docs: [OpenFeature React SDK](https://openfeature.dev/docs/reference/technologies/client/web/react)
 
-## Support
+## Next steps
 
-- Check the documentation linked above
-- Ask questions in the OpenFeature community
+- If you want a real provider, specify which provider(s) to install now; otherwise continue with `InMemoryProvider`.
+- Add flags and wire UI with `useFlag`/typed hooks.
+- Consider using the Multi-Provider to aggregate multiple providers.
+- Consider tracking events with `useTrack`.

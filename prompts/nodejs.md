@@ -1,6 +1,6 @@
 # OpenFeature Node.js SDK Installation Prompt
 
-You are helping to install and configure the OpenFeature Node.js SDK for server-side JavaScript/TypeScript applications. This guide focuses on installing and wiring up the OpenFeature SDK. If no provider is specified, use an example `InMemoryProvider` to get started.
+You are helping to install and configure the OpenFeature Node.js SDK for server-side JavaScript/TypeScript applications. This guide focuses on installing and wiring up the OpenFeature SDK. If no provider is specified, default to the simple `InMemoryProvider` to get started. Do not install any feature flags as part of this process, the user can ask for you to do that later.
 
 **Do not use this for:**
 
@@ -54,46 +54,18 @@ const flagConfig = {
       on: true,
       off: false,
     },
-    defaultVariant: 'off',
-    contextEvaluator: (context) => {
-      if (context?.plan === 'premium') {
-        return 'on';
-      }
-      return 'off';
-    },
+    defaultVariant: 'on',
   },
 };
 
+// Replace with provider from: https://openfeature.dev/ecosystem/
 const inMemoryProvider = new InMemoryProvider(flagConfig);
 
 // Prefer awaiting readiness at startup
 await OpenFeature.setProviderAndWait(inMemoryProvider);
 ```
 
-### 3. Evaluate flags with the client
-
-Create a client and evaluate feature flag values.
-
-```javascript
-import { OpenFeature } from '@openfeature/server-sdk';
-
-const client = OpenFeature.getClient();
-
-// Without context
-const enabled = await client.getBooleanValue('new-message', false);
-
-// With per-request context (recommended)
-const requestContext = {
-  targetingKey: req.user?.id || 'anonymous',
-  email: req.user?.email,
-};
-
-const text = await client.getStringValue('welcome-text', 'Hello', requestContext);
-const limit = await client.getNumberValue('api-limit', 100, requestContext);
-const config = await client.getObjectValue('ui-config', { theme: 'light' }, requestContext);
-```
-
-### 4. Update the evaluation context
+### 3. Update the evaluation context
 
 Provide user or environment attributes via the evaluation context to enable user targeting of your feature flags.
 
@@ -120,7 +92,32 @@ app.use((req, res, next) => {
 });
 ```
 
+### 4. Evaluate flags with the client
+
+Create a client and evaluate feature flag values.
+
+```javascript
+import { OpenFeature } from '@openfeature/server-sdk';
+
+const client = OpenFeature.getClient();
+
+// Without context
+const enabled = await client.getBooleanValue('new-message', false);
+
+// With per-request context (recommended)
+const requestContext = {
+  targetingKey: req.user?.id || 'anonymous',
+  email: req.user?.email,
+};
+
+const text = await client.getStringValue('welcome-text', 'Hello', requestContext);
+const limit = await client.getNumberValue('api-limit', 100, requestContext);
+const config = await client.getObjectValue('ui-config', { theme: 'light' }, requestContext);
+```
+
 ## Optional advanced usage
+
+Only implement the following optional sections if requested.
 
 ### Multi-Provider (combine multiple providers)
 
@@ -217,21 +214,15 @@ Reference: [Shutdown (OpenFeature Node.js SDK)](https://openfeature.dev/docs/ref
 - **Context not applied**: Pass an evaluation context with a `targetingKey` for per-request evaluations; use `OpenFeature.setContext(...)` for global values.
 - **Peer dependency with yarn/pnpm**: Install `@openfeature/core` alongside `@openfeature/server-sdk` when using yarn or pnpm.
 
-## Next steps
-
-- If you want a real provider, specify which provider(s) to install now; otherwise continue with the example `InMemoryProvider`.
-- Add more flags and wire business logic to feature decisions.
-- Consider using the Multi-Provider to aggregate multiple sources.
-
 ## Helpful resources
 
 - OpenFeature Node.js SDK docs: [OpenFeature Node.js SDK](https://openfeature.dev/docs/reference/technologies/server/javascript/)
 - Multi-Provider spec: [Multi-Provider](https://openfeature.dev/specification/appendix-a/#multi-provider)
 - Multi-Provider (server) contrib: [js-sdk-contrib multi-provider](https://github.com/open-feature/js-sdk-contrib/tree/main/libs/providers/multi-provider)
 
-## Support
+## Next steps
 
-- Check the documentation linked above
-- Ask questions in the OpenFeature community
-
-
+- If you want a real provider, specify which provider(s) to install now; otherwise continue with the example `InMemoryProvider`.
+- Add flags with `client.get<type>Value` methods and wire business logic to feature decisions.
+- Consider using the Multi-Provider to aggregate multiple providers.
+- Consider tracking events with `useTrack`.
