@@ -1,10 +1,9 @@
 import { z } from "zod";
-import type { OpenFeatureMCPServerInstance } from "../types";
+import type { OpenFeatureMCPServerInstance, ToolResult } from "../types";
 import { BUNDLED_PROMPTS, INSTALL_GUIDES } from "./promptsBundle.generated";
 
 const InstallGuideArgsSchema = z.object({
   guide: z.enum(INSTALL_GUIDES),
-  providers: z.array(z.string()).optional(),
 });
 
 export function registerInstallTools(
@@ -18,10 +17,20 @@ export function registerInstallTools(
       )}. Input: { guide: string }`,
       inputSchema: InstallGuideArgsSchema.shape,
     },
-    async (args: unknown) => {
-      const validatedArgs = InstallGuideArgsSchema.parse(args);
-      const prompt = BUNDLED_PROMPTS[validatedArgs.guide];
+    async (args: unknown): Promise<ToolResult> => {
+      const parsed = InstallGuideArgsSchema.safeParse(args);
+      if (!parsed.success) {
+        return {
+          content: [
+            {
+              type: "text" as const,
+              text: `Invalid input: ${parsed.error.message}`,
+            },
+          ],
+        };
+      }
 
+      const prompt = BUNDLED_PROMPTS[parsed.data.guide];
       return {
         content: [
           {

@@ -17,6 +17,16 @@ export interface OpenFeatureMCPServerInstance {
       inputSchema?: ZodRawShape;
       outputSchema?: ZodRawShape;
     },
-    handler: (args: unknown) => Promise<unknown>
+    handler: (args: unknown) => Promise<ToolResult>
   ) => void;
 }
+
+/**
+ * Standard MCP tool result shape used by this worker
+ */
+export type ToolResult = {
+  content: Array<{
+    type: "text";
+    text: string;
+  }>;
+};
