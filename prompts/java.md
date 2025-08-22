@@ -116,6 +116,7 @@ reqAttrs.put("email", new Value("user@example.com"));
 reqAttrs.put("ip", new Value("203.0.113.1"));
 String targetingKey = "user-123"; // unique user or session identifier
 EvaluationContext requestCtx = new ImmutableContext(targetingKey, reqAttrs);
+boolean flagValue = client.getBooleanValue("some-flag", false, requestCtx);
 ```
 
 ### 4. Evaluate flags with the client
