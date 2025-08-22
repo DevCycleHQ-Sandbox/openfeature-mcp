@@ -4,6 +4,7 @@ import { BUNDLED_PROMPTS, INSTALL_GUIDES } from "./promptsBundle.generated";
 
 const InstallGuideArgsSchema = z.object({
   guide: z.enum(INSTALL_GUIDES),
+  providers: z.array(z.string()).optional(),
 });
 
 export function registerInstallTools(

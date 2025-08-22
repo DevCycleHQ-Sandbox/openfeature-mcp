@@ -2,12 +2,13 @@
 
 You are helping to install and configure the OpenFeature Node.js SDK for server-side JavaScript/TypeScript applications. This guide focuses on installing and wiring up the OpenFeature SDK. If no provider is specified, default to the simple `InMemoryProvider` to get started. Do not install any feature flags as part of this process, the user can ask for you to do that later.
 
+- other non-Node runtimes (Bun / Deno / Cloudflare Workers / etc) may work, but are not officially supported.
+
 **Do not use this for:**
 
 - Browser-based apps (use `javascript.md` instead)
 - React applications (use `react.md` instead)
 - React Native
-- other non-Node runtimes (like Bun / Cloudflare Workers / etc) may work, but are not officially supported
 
 ## Required Information
 
