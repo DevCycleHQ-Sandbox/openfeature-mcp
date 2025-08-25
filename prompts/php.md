@@ -171,5 +171,3 @@ Reference: [Hooks (OpenFeature PHP SDK)](https://openfeature.dev/docs/reference/
 - If you want a real provider, specify which provider(s) to install now; otherwise continue with the example `FlagdProvider`.
 - Add flags with `$client->get<Type>Value` methods and wire business logic to feature decisions.
 - Consider configuring a PSR-3 logger and using hooks for observability.
-
-
