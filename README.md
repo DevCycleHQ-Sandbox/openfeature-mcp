@@ -116,8 +116,8 @@ Fetches and returns OpenFeature SDK install prompt Markdown for a given guide fr
 - `/mcp` - MCP JSON-RPC transport endpoint
 - `/sse` - MCP Server-Sent Events transport endpoint
 - `/health` - Health check endpoint
-- `/info` - Service information endpoint
-- `/` - Redirects to OpenFeature documentation
+- `/info` - Service information endpoint (includes available guides)
+- `/` - Redirects to OpenFeature docs reference intro
 
 ## Development
 
