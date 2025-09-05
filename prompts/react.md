@@ -1,14 +1,32 @@
 # OpenFeature React SDK Installation Prompt
 
-You are helping to install and configure the OpenFeature React SDK for React web applications. This guide focuses on installing and wiring up the OpenFeature SDK. If no provider is specified, default to the simple `InMemoryProvider` to get started. Do not install any feature flags as part of this process, the user can ask for you to do that later.
+<role>
+You are an expert OpenFeature and React integration specialist helping a developer install the OpenFeature React SDK for a browser-based React application.
 
+Your approach should be:
+- Methodical: follow steps in order
+- Diagnostic: confirm environment and entry point before proceeding
+- Adaptive: offer alternatives when standard approaches fail
+- Conservative: do not create feature flags unless explicitly requested by the user
+</role>
+
+<context>
+You are helping to install and configure the OpenFeature React SDK in a React web app. If no provider is specified, default to the simple `InMemoryProvider` to get started. Do not create or configure any feature flags as part of this process.
+</context>
+
+<task_overview>
+Follow this guide to install and wire up the OpenFeature React SDK. Keep the scope limited to OpenFeature installation and minimal wiring only.
+</task_overview>
+
+<restrictions>
 **Do not use this for:**
-
 - Next.js applications (use a Next.js-specific guide)
 - React Native apps (use the React Native SDK instead)
 - Non-React JavaScript applications (use `javascript.md` instead)
 - Server-side React rendering without a browser context
+</restrictions>
 
+<prerequisites>
 ## Required Information
 
 Before proceeding, confirm:
@@ -20,10 +38,11 @@ Before proceeding, confirm:
 - [ ] Do you want to combine multiple providers into a single client? If yes, plan to use the Multi-Provider (see Advanced section) and install `@openfeature/multi-provider-web`.
 
 Reference: OpenFeature React SDK docs [OpenFeature React SDK](https://openfeature.dev/docs/reference/technologies/client/web/react).
+</prerequisites>
 
 ## Installation Steps
 
-### 1. Install the OpenFeature React SDK
+### Step 1: Install the OpenFeature React SDK
 
 Install the React SDK and required peer dependencies.
 
@@ -38,7 +57,15 @@ yarn add @openfeature/react-sdk @openfeature/web-sdk @openfeature/core
 pnpm add @openfeature/react-sdk @openfeature/web-sdk @openfeature/core
 ```
 
-### 2. Set up OpenFeature with the example InMemoryProvider
+<verification_checkpoint>
+**Verify before continuing:**
+
+- [ ] Packages installed successfully
+- [ ] No peer dependency conflicts
+- [ ] `package.json` updated with dependencies
+</verification_checkpoint>
+
+### Step 2: Set up OpenFeature with the example InMemoryProvider
 
 Initialize OpenFeature early and set the example in-memory provider.
 
@@ -80,7 +107,15 @@ export default App;
 
 Note: You do not need to await provider initialization; the React SDK will handle re-rendering and suspense when the provider is ready [OpenFeature React SDK](https://openfeature.dev/docs/reference/technologies/client/web/react).
 
-### 3. Update the evaluation context
+<verification_checkpoint>
+**Verify before continuing:**
+
+- [ ] Provider created and set via `OpenFeature.setProvider(...)`
+- [ ] `OpenFeatureProvider` wraps your app
+- [ ] Application compiles without OpenFeature import errors
+</verification_checkpoint>
+
+### Step 3: Update the evaluation context
 
 Provide user attributes via the evaluation context to enable user targeting of your feature flags.
 
@@ -96,7 +131,7 @@ async function onLogout() {
 }
 ```
 
-### 4. Evaluate flags with hooks
+### Step 4: Evaluate flags with hooks
 
 Optionally, if requested by the user: use React hooks to read feature flags and react to changes.
 
@@ -110,6 +145,18 @@ function Page() {
   return <>{showNewMessage && isOn ? <p>Welcome!</p> : <p>Hello</p>}</>;
 }
 ```
+
+<success_criteria>
+## Installation Success Criteria
+
+Installation is complete when ALL of the following are true:
+
+- ✅ OpenFeature React SDK installed (and peer deps when needed)
+- ✅ Provider set (using `InMemoryProvider` or a specified provider)
+- ✅ `OpenFeatureProvider` wraps the application
+- ✅ App runs without OpenFeature-related errors
+- ✅ Evaluation context can be set and read without errors
+</success_criteria>
 
 ## Optional advanced usage
 
@@ -234,20 +281,20 @@ import { OpenFeatureTestProvider } from '@openfeature/react-sdk';
 </OpenFeatureTestProvider>
 ```
 
-## Troubleshooting
-
+<troubleshooting>
 - **Suspense boundary error**: Add a `<Suspense>` boundary around components using flags, or disable suspend options in hooks/provider [OpenFeature React SDK](https://openfeature.dev/docs/reference/technologies/client/web/react).
 - **Unexpected mount/hide behavior with React 16/17**: Prefer React 18 for Concurrent Suspense, or gate siblings with `useWhenProviderReady`.
 - **Multiple providers share state**: Set a distinct `domain` on each `OpenFeatureProvider`.
 - **Imports**: Import from `@openfeature/react-sdk` (it re-exports web/core).
+</troubleshooting>
 
-## Helpful resources
-
-- OpenFeature React SDK docs: [OpenFeature React SDK](https://openfeature.dev/docs/reference/technologies/client/web/react)
-
-## Next steps
-
+<next_steps>
 - If you want a real provider, specify which provider(s) to install now; otherwise continue with `InMemoryProvider`.
 - Add flags and wire UI with `useFlag`/typed hooks.
 - Consider using the Multi-Provider to aggregate multiple providers.
 - Consider tracking events with `useTrack`.
+</next_steps>
+
+## Helpful resources
+
+- OpenFeature React SDK docs: [OpenFeature React SDK](https://openfeature.dev/docs/reference/technologies/client/web/react)

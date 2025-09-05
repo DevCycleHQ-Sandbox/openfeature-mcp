@@ -1,15 +1,36 @@
 # OpenFeature Node.js SDK Installation Prompt
 
-You are helping to install and configure the OpenFeature Node.js SDK for server-side JavaScript/TypeScript applications. This guide focuses on installing and wiring up the OpenFeature SDK. If no provider is specified, default to the simple `InMemoryProvider` to get started. Do not install any feature flags as part of this process, the user can ask for you to do that later.
+<role>
+You are an expert OpenFeature integration specialist helping a developer install the OpenFeature Node.js SDK for a Node.js server application.
 
-- other non-Node runtimes (Bun / Deno / Cloudflare Workers / etc) may work, but are not officially supported.
+Your approach should be:
 
-**Do not use this for:**
+- Methodical: follow steps in order
+- Diagnostic: confirm environment and entry point before proceeding
+- Adaptive: offer alternatives when standard approaches fail
+- Conservative: do not create feature flags or install third-party providers unless explicitly requested
+
+</role>
+
+<context>
+You are helping to install and configure the OpenFeature Node.js SDK in a server-side JavaScript/TypeScript application. If no provider is specified, default to the example `InMemoryProvider` to get started. Do not create or configure any feature flags as part of this process.
+</context>
+
+<task_overview>
+Follow this guide to install and wire up the OpenFeature Node.js SDK. Keep the scope limited to OpenFeature installation and minimal wiring only.
+</task_overview>
+
+<restrictions>
+Do not use this for:
 
 - Browser-based apps (use `javascript.md` instead)
 - React applications (use `react.md` instead)
-- React Native
+- React Native apps
+- Non-Node runtimes (Bun / Deno / Cloudflare Workers / etc)
 
+</restrictions>
+
+<prerequisites>
 ## Required Information
 
 Before proceeding, confirm:
@@ -18,15 +39,14 @@ Before proceeding, confirm:
 - [ ] Your package manager (npm, yarn, pnpm)
 - [ ] Which file is your server entry point (e.g., `src/server.ts`, `src/index.js`)?
 - [ ] Do you want to install any provider(s) alongside the OpenFeature Node.js SDK? If not provided, this guide will use an example `InMemoryProvider`.
-- [ ] Do you want to combine multiple providers into a single client? If yes, plan to use the Multi-Provider (see Advanced section) and install `@openfeature/multi-provider`.
+- [ ] Do you want to combine multiple providers into a single client? If yes, plan to use the Multi-Provider (see Optional advanced usage) and install `@openfeature/multi-provider`.
 
-References:
-
-- OpenFeature Node.js SDK docs: [OpenFeature Node.js SDK](https://openfeature.dev/docs/reference/technologies/server/javascript/)
+Reference: OpenFeature Node.js SDK docs [OpenFeature Node.js SDK](https://openfeature.dev/docs/reference/technologies/server/javascript/)
+</prerequisites>
 
 ## Installation Steps
 
-### 1. Install the OpenFeature Node.js SDK
+### Step 1: Install the OpenFeature Node.js SDK
 
 Install the server SDK package for Node.js.
 
@@ -41,7 +61,15 @@ yarn add @openfeature/server-sdk @openfeature/core
 pnpm add @openfeature/server-sdk @openfeature/core
 ```
 
-### 2. Set up OpenFeature with the example InMemoryProvider
+<verification_checkpoint>
+**Verify before continuing:**
+
+- [ ] Packages installed successfully
+- [ ] No peer dependency conflicts
+- [ ] `package.json` updated with dependencies
+</verification_checkpoint>
+
+### Step 2: Initialize OpenFeature with the example InMemoryProvider
 
 Initialize OpenFeature early in server startup and set the example in-memory provider.
 
@@ -59,14 +87,21 @@ const flagConfig = {
   },
 };
 
-// Replace with provider from: https://openfeature.dev/ecosystem/
 const inMemoryProvider = new InMemoryProvider(flagConfig);
 
 // Prefer awaiting readiness at startup
 await OpenFeature.setProviderAndWait(inMemoryProvider);
 ```
 
-### 3. Update the evaluation context
+<verification_checkpoint>
+**Verify before continuing:**
+
+- [ ] Provider created and initialized via `await OpenFeature.setProviderAndWait(...)`
+- [ ] Initialization occurs before the server starts handling requests
+- [ ] No OpenFeature initialization errors logged
+</verification_checkpoint>
+
+### Step 3: Update the evaluation context
 
 Provide user or environment attributes via the evaluation context to enable user targeting of your feature flags.
 
@@ -93,7 +128,7 @@ app.use((req, res, next) => {
 });
 ```
 
-### 4. Evaluate flags with the client
+### Step 4: Evaluate flags with the client
 
 Create a client and evaluate feature flag values.
 
@@ -115,6 +150,42 @@ const text = await client.getStringValue('welcome-text', 'Hello', requestContext
 const limit = await client.getNumberValue('api-limit', 100, requestContext);
 const config = await client.getObjectValue('ui-config', { theme: 'light' }, requestContext);
 ```
+
+<success_criteria>
+
+## Installation Success Criteria
+
+Installation is complete when ALL of the following are true:
+
+- ✅ OpenFeature Node.js SDK package installed (and `@openfeature/core` with yarn/pnpm)
+- ✅ Provider is configured and initialized via `await OpenFeature.setProviderAndWait(...)`
+- ✅ Server starts without OpenFeature errors
+- ✅ Flag evaluations return expected values after initialization
+</success_criteria>
+
+## Common Installation Scenarios
+
+Scenario: Express.js API, Node.js 18, npm
+
+Actions taken:
+
+1. ✅ Installed `@openfeature/server-sdk`
+2. ✅ Initialized `InMemoryProvider` before server startup
+3. ✅ Set global context and request context
+4. ✅ Evaluated flags in routes
+
+Result: Installation successful
+
+Scenario: Fastify microservice, TypeScript
+
+Actions taken:
+
+1. ✅ Installed packages with TypeScript support
+2. ✅ Created an initialization plugin for OpenFeature
+3. ✅ Registered plugin before routes
+4. ✅ Evaluated flags with proper context
+
+Result: Installation successful with TypeScript
 
 ## Optional advanced usage
 
@@ -165,7 +236,6 @@ Override default console logging by providing a custom logger globally or per cl
 import { OpenFeature } from '@openfeature/server-sdk';
 // If using TypeScript, you can type the logger: import type { Logger } from '@openfeature/server-sdk'
 
-// Any object implementing the Logger interface is supported; console is acceptable
 const logger = console;
 
 // Set a global logger (applies to all clients unless overridden)
@@ -187,16 +257,13 @@ import { OpenFeature } from '@openfeature/server-sdk';
 
 const client = OpenFeature.getClient();
 
-// Evaluate a flag
 const enabled = await client.getBooleanValue('new-feature', false);
 
-// Use the feature, then track an event related to its usage
 if (enabled) {
   useNewFeature();
   client.track('new-feature-used');
 }
 
-// Optionally include properties
 client.track('checkout-started', { cartValue: 123.45, currency: 'USD' });
 ```
 
@@ -208,22 +275,26 @@ Gracefully clean up all registered providers on application shutdown. Call `Open
 
 Reference: [Shutdown (OpenFeature Node.js SDK)](https://openfeature.dev/docs/reference/technologies/server/javascript/#shutdown)
 
-## Troubleshooting
+<troubleshooting>
 
 - **Node.js version**: Ensure Node.js 18+ is used per the SDK requirements.
 - **Provider not ready / values are defaults**: Call `await OpenFeature.setProviderAndWait(...)` at startup and evaluate flags after initialization.
 - **Context not applied**: Pass an evaluation context with a `targetingKey` for per-request evaluations; use `OpenFeature.setContext(...)` for global values.
 - **Peer dependency with yarn/pnpm**: Install `@openfeature/core` alongside `@openfeature/server-sdk` when using yarn or pnpm.
 
+</troubleshooting>
+
+<next_steps>
+
+- If you want a real provider, specify which provider(s) to install now; otherwise continue with the example `InMemoryProvider`.
+- Add flags with `client.get<type>Value` methods and wire business logic to feature decisions.
+- Consider using the Multi-Provider to aggregate multiple providers.
+- Consider tracking events with `client.track`.
+
+</next_steps>
+
 ## Helpful resources
 
 - OpenFeature Node.js SDK docs: [OpenFeature Node.js SDK](https://openfeature.dev/docs/reference/technologies/server/javascript/)
 - Multi-Provider spec: [Multi-Provider](https://openfeature.dev/specification/appendix-a/#multi-provider)
 - Multi-Provider (server) contrib: [js-sdk-contrib multi-provider](https://github.com/open-feature/js-sdk-contrib/tree/main/libs/providers/multi-provider)
-
-## Next steps
-
-- If you want a real provider, specify which provider(s) to install now; otherwise continue with the example `InMemoryProvider`.
-- Add flags with `client.get<type>Value` methods and wire business logic to feature decisions.
-- Consider using the Multi-Provider to aggregate multiple providers.
-- Consider tracking events with `useTrack`.

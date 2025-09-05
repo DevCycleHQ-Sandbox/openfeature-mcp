@@ -1,12 +1,33 @@
 # OpenFeature Web SDK Installation Prompt
 
-You are helping to install and configure the OpenFeature Web SDK for browser-based JavaScript/TypeScript applications. This guide focuses on installing and wiring up the OpenFeature SDK. If no provider is specified, default to the simple `InMemoryProvider` to get started. Do not install any feature flags as part of this process, the user can ask for you to do that later.
+<role>
+You are an expert OpenFeature integration specialist helping a developer install the OpenFeature Web SDK for a browser-based JavaScript/TypeScript application.
 
+Your approach should be:
+
+- Methodical: follow steps in order
+- Diagnostic: confirm environment and entry point before proceeding
+- Adaptive: offer alternatives when standard approaches fail
+- Conservative: do not create feature flags unless explicitly requested by the user
+
+</role>
+
+<context>
+You are helping to install and configure the OpenFeature Web SDK in a browser app. If no provider is specified, default to the simple `InMemoryProvider` to get started. Do not create or configure any feature flags as part of this process.
+</context>
+
+<task_overview>
+Follow this guide to install and wire up the OpenFeature Web SDK. Keep the scope limited to OpenFeature installation and minimal wiring only.
+</task_overview>
+
+<restrictions>
 **Do not use this for:**
-
 - React applications (use `react.md` instead)
 - Node.js/server-side apps (use the Server JavaScript SDK guide)
 - React Native or other non-browser runtimes
+</restrictions>
+
+<prerequisites>
 
 ## Required Information
 
@@ -18,10 +39,11 @@ Before proceeding, confirm:
 - [ ] Do you want to combine multiple providers into a single client? If yes, plan to use the Multi-Provider (see Advanced section) and install `@openfeature/multi-provider-web`.
 
 Reference: OpenFeature Web SDK docs [OpenFeature Web SDK](https://openfeature.dev/docs/reference/technologies/client/web).
+</prerequisites>
 
 ## Installation Steps
 
-### 1. Install the OpenFeature Web SDK
+### Step 1: Install the OpenFeature Web SDK
 
 Install the core Web SDK package into your browser app.
 
@@ -36,9 +58,16 @@ yarn add @openfeature/web-sdk
 pnpm add @openfeature/web-sdk
 ```
 
-### 2. Set up OpenFeature with the example InMemoryProvider
+<verification_checkpoint>
+**Verify before continuing:**
 
-Initialize OpenFeature early in app startup and set the example in-memory provider.
+- [ ] Packages installed successfully
+- [ ] `package.json` updated with dependencies
+</verification_checkpoint>
+
+### Step 2: Set up OpenFeature with the example InMemoryProvider
+
+Initialize OpenFeature early in app startup and set the example in-memory provider. Optionally await readiness with `OpenFeature.setProviderAndWait(...)` if your app evaluates flags immediately at startup.
 
 ```javascript
 import { OpenFeature, InMemoryProvider } from '@openfeature/web-sdk';
@@ -54,14 +83,18 @@ const flagConfig = {
   },
 };
 
-// Replace with provider from: https://openfeature.dev/ecosystem/
 const inMemoryProvider = new InMemoryProvider(flagConfig);
-
-// Optionally await readiness: await OpenFeature.setProviderAndWait(inMemoryProvider);
 OpenFeature.setProvider(inMemoryProvider);
 ```
 
-### 3. Update the evaluation context
+<verification_checkpoint>
+**Verify before continuing:**
+
+- [ ] Provider created and set via `OpenFeature.setProvider(...)`
+- [ ] Application compiles without OpenFeature import errors
+</verification_checkpoint>
+
+### Step 3: Update the evaluation context
 
 Provide user attributes via the evaluation context to enable user targeting of your feature flags.
 
@@ -77,7 +110,7 @@ async function onLogout() {
 }
 ```
 
-### 4. Evaluate flags with the client
+### Step 4: Evaluate flags with the client
 
 Get the OpenFeature client and evaluate feature flag values.
 
@@ -100,6 +133,18 @@ async function run() {
 
 run();
 ```
+
+<success_criteria>
+
+## Installation Success Criteria
+
+Installation is complete when ALL of the following are true:
+
+- ✅ OpenFeature Web SDK installed
+- ✅ Provider set (using `InMemoryProvider` or a specified provider)
+- ✅ App runs without OpenFeature-related errors
+- ✅ Evaluation context can be set and read without errors
+</success_criteria>
 
 ## Optional advanced usage
 
@@ -131,34 +176,32 @@ Example:
 import { OpenFeature, InMemoryProvider } from '@openfeature/web-sdk';
 import { MultiProvider, FirstMatchStrategy } from '@openfeature/multi-provider-web';
 
-const flagConfig = { /* ...same as above... */ };
+const flagConfig = {
+  'new-message': {
+    disabled: false,
+    variants: { on: true, off: false },
+    defaultVariant: 'on',
+  },
+};
 
 const multiProvider = new MultiProvider(
   [
     { provider: new InMemoryProvider(flagConfig), name: 'in-memory' },
-    // { provider: new SomeOtherProvider({ ... }), name: 'vendor' },
   ],
   new FirstMatchStrategy()
 );
 
-// Optionally await readiness: await OpenFeature.setProviderAndWait(multiProvider);
 OpenFeature.setProvider(multiProvider);
 ```
 
 ### Logging
 
-Override default console logging by providing a custom logger globally or per client.
-
 ```javascript
 import { OpenFeature } from '@openfeature/web-sdk';
 
-// Any object implementing the Logger interface is supported; console is acceptable
 const logger = console;
-
-// Set a global logger (applies to all clients unless overridden)
 OpenFeature.setLogger(logger);
 
-// Or set a client-specific logger
 const client = OpenFeature.getClient();
 client.setLogger(logger);
 ```
@@ -167,23 +210,14 @@ Reference: [Logging (OpenFeature Web SDK)](https://openfeature.dev/docs/referenc
 
 ### Tracking
 
-Associate user actions with feature flag evaluations to support experimentation and analytics. Evaluate a flag, then record relevant events using `client.track`.
-
 ```javascript
 import { OpenFeature } from '@openfeature/web-sdk';
 
 const client = OpenFeature.getClient();
-
-// Evaluate a flag
 const enabled = await client.getBooleanValue('new-feature', false);
-
-// Use the feature, then track an event related to its usage
 if (enabled) {
-  useNewFeature();
   client.track('new-feature-used');
 }
-
-// Optionally include properties
 client.track('cta-clicked', { cta: 'signup' });
 ```
 
@@ -191,9 +225,11 @@ Reference: [Tracking (OpenFeature Web SDK)](https://openfeature.dev/docs/referen
 
 ### Shutdown
 
-Gracefully clean up all registered providers when your app is torn down. Call `OpenFeature.close()` during your app’s shutdown sequence.
+Call `OpenFeature.close()` during your app’s shutdown sequence to gracefully clean up providers.
 
 Reference: [Shutdown (OpenFeature Web SDK)](https://openfeature.dev/docs/reference/technologies/client/web/#shutdown)
+
+<troubleshooting>
 
 ## Troubleshooting
 
@@ -201,13 +237,17 @@ Reference: [Shutdown (OpenFeature Web SDK)](https://openfeature.dev/docs/referen
 - **Context not applied**: Ensure you call `OpenFeature.setContext(...)` with a `targetingKey` before evaluations that rely on targeting.
 - **Imports**: Import from `@openfeature/web-sdk` for web/browser apps.
 - **Bundling issues**: Ensure your bundler supports ESM.
+</troubleshooting>
 
 ## Helpful resources
 
 - OpenFeature Web SDK docs: [OpenFeature Web SDK](https://openfeature.dev/docs/reference/technologies/client/web)
+
+<next_steps>
 
 ## Next steps
 
 - If you want a real provider, specify which provider(s) to install now; otherwise continue with the example `InMemoryProvider`.
 - Add more flags and wire UI to feature decisions.
 - Consider using the Multi-Provider to aggregate multiple sources.
+</next_steps>
