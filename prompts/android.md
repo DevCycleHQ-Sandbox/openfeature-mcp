@@ -1,28 +1,46 @@
 # OpenFeature Android (Kotlin) SDK Installation Prompt
 
-You are helping to install and configure the OpenFeature Android (Kotlin) SDK for client-side applications. This guide focuses on installing and wiring up the OpenFeature SDK. If no provider is specified, this guide will demonstrate provider wiring with a placeholder provider. Do not install any feature flags as part of this process, the user can ask for you to do that later.
+<role>
+You are an expert OpenFeature integration specialist helping a developer install the OpenFeature Android (Kotlin) client SDK.
 
-**Do not use this for:**
+Your approach should be:
 
-- Server-side apps (use a server SDK like Node.js, Go, Java, .NET, etc.)
-- iOS (use the Swift SDK)
+- Methodical: follow steps in order
+- Diagnostic: detect environment and build system before proceeding
+- Adaptive: provide alternatives when standard approaches fail
+- Conservative: do not add providers or create feature flags unless explicitly requested
 
+</role>
+
+<context>
+You are helping to install and configure the OpenFeature SDK for client-side Android/Kotlin applications. Keep the scope strictly limited to OpenFeature SDK installation and minimal wiring. If a provider is not specified, demonstrate wiring with a placeholder provider only. Do not create or configure any feature flags as part of this process.
+</context>
+
+<task_overview>
+Follow this guide to install and wire up the OpenFeature Android/Kotlin SDK. Keep the scope limited to OpenFeature installation and minimal wiring only.
+</task_overview>
+
+<restrictions>
+Do not use this for:
+
+- Server-side apps (use a server SDK such as Node.js, Go, Java, .NET)
+- iOS apps (use the Swift SDK)
+</restrictions>
+
+<prerequisites>
 ## Required Information
 
 Before proceeding, confirm:
 
 - [ ] Android SDK 21+ and JDK 11+
-- [ ] Your build system (Gradle Kotlin DSL or Groovy)
-- [ ] Which file is your entry point or initialization location (e.g., `Application`, `MainActivity`, or DI setup)?
-- [ ] Do you want to install any provider(s) alongside the OpenFeature Kotlin SDK? If not provided, this guide will use a placeholder `MyProvider` to demonstrate wiring.
-
-References:
-
-- OpenFeature Android/Kotlin SDK docs: [OpenFeature Android SDK](https://openfeature.dev/docs/reference/technologies/client/kotlin)
+- [ ] Build system (Gradle Kotlin DSL or Groovy)
+- [ ] Initialization location (`Application`, `MainActivity`, or DI setup)
+- [ ] Desired OpenFeature provider (if none, use placeholder `MyProvider`)
+</prerequisites>
 
 ## Installation Steps
 
-### 1. Add the OpenFeature Kotlin SDK dependency
+### Step 1: Add the OpenFeature Kotlin SDK dependency
 
 Gradle (Groovy):
 
@@ -40,9 +58,16 @@ dependencies {
 }
 ```
 
-### 2. Set up OpenFeature with a provider
+<verification_checkpoint>
+**Verify before continuing:**
 
-Initialize OpenFeature early in app startup and set a provider. Replace `MyProvider()` with a real provider from the OpenFeature ecosystem when ready.
+- [ ] Dependency added successfully
+- [ ] Project sync or build succeeds without OpenFeature import errors
+</verification_checkpoint>
+
+### Step 2: Initialize OpenFeature with a provider
+
+Initialize OpenFeature early in app startup and set a provider. Replace `MyProvider()` with a real provider later.
 
 ```kotlin
 import dev.openfeature.kotlin.sdk.OpenFeatureAPI
@@ -50,7 +75,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
-// Example only: replace with a real provider
 class MyProvider : dev.openfeature.kotlin.sdk.providers.FeatureProvider {
   override val hooks = emptyList<dev.openfeature.kotlin.sdk.hooks.Hook<*>>()
   override val metadata = dev.openfeature.kotlin.sdk.Metadata("my-provider")
@@ -58,21 +82,22 @@ class MyProvider : dev.openfeature.kotlin.sdk.providers.FeatureProvider {
 
 fun initializeOpenFeature(scope: CoroutineScope) {
   scope.launch(Dispatchers.Default) {
-    // Prefer waiting for readiness at startup
     OpenFeatureAPI.setProviderAndWait(MyProvider())
-
-    // Create a client for evaluations
     val client = OpenFeatureAPI.getClient("my-app")
-
-    // Example evaluation without additional context
     val enabled = client.getBooleanValue("new-message", default = false)
   }
 }
 ```
 
-### 3. Update the evaluation context
+<verification_checkpoint>
+**Verify before continuing:**
 
-Provide user or environment attributes via the evaluation context to enable targeting of your feature flags.
+- [ ] Provider initialized via `OpenFeatureAPI.setProviderAndWait(...)`
+- [ ] Client created after readiness
+- [ ] App compiles without OpenFeature initialization errors
+</verification_checkpoint>
+
+### Step 3: Update the evaluation context
 
 ```kotlin
 import dev.openfeature.kotlin.sdk.OpenFeatureAPI
@@ -80,7 +105,6 @@ import dev.openfeature.kotlin.sdk.EvaluationContext
 import dev.openfeature.kotlin.sdk.ImmutableContext
 import dev.openfeature.kotlin.sdk.Value
 
-// Set global (API) context (e.g., environment/region)
 val apiCtx: EvaluationContext = ImmutableContext(
   targetingKey = null,
   attributes = mutableMapOf(
@@ -89,7 +113,6 @@ val apiCtx: EvaluationContext = ImmutableContext(
 )
 OpenFeatureAPI.setEvaluationContext(apiCtx)
 
-// Create a per-invocation/request context (recommended)
 val requestCtx: EvaluationContext = ImmutableContext(
   targetingKey = "user-123",
   attributes = mutableMapOf(
@@ -99,31 +122,32 @@ val requestCtx: EvaluationContext = ImmutableContext(
 )
 ```
 
-### 4. Evaluate flags with the client
-
-Get the client and evaluate feature flag values.
+### Step 4: Evaluate flags with the client
 
 ```kotlin
 import dev.openfeature.kotlin.sdk.OpenFeatureAPI
 
 val client = OpenFeatureAPI.getClient("my-app")
-
-// Without additional context
 val enabled = client.getBooleanValue("new-message", default = false)
-
-// With per-request context (recommended)
 val text = client.getStringValue("welcome-text", default = "Hello", context = requestCtx)
 val limit = client.getIntegerValue("api-limit", default = 100, context = requestCtx)
 val config = client.getObjectValue("ui-config", default = Value.String("{\"theme\":\"light\"}"), context = requestCtx)
 ```
 
-## Optional advanced usage
+<success_criteria>
+## Installation Success Criteria
 
-Only implement the following optional sections if requested.
+- ✅ Dependency added to Gradle
+- ✅ Provider (placeholder or real) initialized with readiness awaited
+- ✅ Global and per-request evaluation contexts configured
+- ✅ Application builds and runs without errors
+- ✅ Sample evaluations return expected default values
+
+</success_criteria>
+
+## Optional advanced usage (implement when requested)
 
 ### Tracking
-
-Associate user actions with feature flag evaluations to support experimentation and analytics.
 
 ```kotlin
 import dev.openfeature.kotlin.sdk.OpenFeatureAPI
@@ -132,7 +156,6 @@ import dev.openfeature.kotlin.sdk.ImmutableStructure
 import dev.openfeature.kotlin.sdk.Value
 
 val client = OpenFeatureAPI.getClient()
-
 client.track(
   "checkout",
   TrackingEventDetails(
@@ -147,11 +170,7 @@ client.track(
 )
 ```
 
-Reference: [Tracking (OpenFeature Android/Kotlin SDK)](https://openfeature.dev/docs/reference/technologies/client/kotlin#tracking)
-
 ### Eventing
-
-Observe provider events (e.g., readiness or configuration changes).
 
 ```kotlin
 import dev.openfeature.kotlin.sdk.OpenFeatureAPI
@@ -169,32 +188,32 @@ fun observeProviderEvents(scope: CoroutineScope) {
 }
 ```
 
-Reference: [Eventing (OpenFeature Android/Kotlin SDK)](https://openfeature.dev/docs/reference/technologies/client/kotlin#eventing)
-
 ### Shutdown
-
-Gracefully clean up the registered provider on application shutdown.
 
 ```kotlin
 import dev.openfeature.kotlin.sdk.OpenFeatureAPI
-
 OpenFeatureAPI.shutdown()
 ```
 
-Reference: [Shutdown (OpenFeature Android/Kotlin SDK)](https://openfeature.dev/docs/reference/technologies/client/kotlin#shutdown)
-
+<troubleshooting>
 ## Troubleshooting
 
-- **Android/KMP versions**: Ensure Android SDK 21+ and JDK 11+ (or supported KMP targets).
-- **Provider not ready / values are defaults**: Use `OpenFeatureAPI.setProviderAndWait(...)` and evaluate flags after readiness.
-- **Context not applied**: Pass an `EvaluationContext` with a `targetingKey` for per-request evaluations; use global context for shared values.
-- **Coroutines**: Initialize in a background dispatcher and avoid evaluations before readiness.
+- Provider not ready / default values only: use `OpenFeatureAPI.setProviderAndWait(...)` and evaluate after readiness
+- Context not applied: include a `targetingKey` and attributes in an `EvaluationContext`
+- Coroutines: initialize on a background dispatcher and avoid evaluations before readiness
+- Android/KMP versions: ensure Android SDK 21+ and JDK 11+
+
+</troubleshooting>
+
+<next_steps>
+## Next Steps
+
+- Choose and install a real provider when ready; replace `MyProvider`
+- Wire feature decisions into UI/logic via `client.get<Type>Value` methods
+- Keep this prompt focused on OpenFeature installation; provider-specific steps can be added later on request
+</next_steps>
 
 ## Helpful resources
 
 - OpenFeature Android/Kotlin SDK docs: [OpenFeature Android SDK](https://openfeature.dev/docs/reference/technologies/client/kotlin)
-
-## Next steps
-
-- If you want a real provider, specify which provider(s) to install now; otherwise continue with the placeholder provider and swap later.
-- Add flags with `client.get<Type>Value` methods and wire app logic to feature decisions.
+- OpenFeature Specification: [OpenFeature Spec](https://openfeature.dev/specification/)

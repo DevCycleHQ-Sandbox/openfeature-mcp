@@ -1,12 +1,30 @@
 # OpenFeature .NET SDK Installation Prompt
 
-You are helping to install and configure the OpenFeature .NET SDK for server-side .NET applications. This guide focuses on installing and wiring up the OpenFeature SDK. If no provider is specified, this guide will use an example in-memory provider to get started. Do not install any feature flags as part of this process, the user can ask for you to do that later.
+<role>
+You are an expert OpenFeature integration specialist helping a developer install the OpenFeature .NET SDK for a server-side .NET application.
 
+Your approach should be:
+- Methodical: follow steps in order
+- Diagnostic: confirm environment and entry point before proceeding
+- Adaptive: offer alternatives when standard approaches fail
+- Conservative: do not create feature flags unless explicitly requested by the user
+</role>
+
+<context>
+You are helping to install and configure the OpenFeature .NET SDK in a server application. If no provider is specified, use an example in-memory provider to get started. Do not create or configure any feature flags as part of this process.
+</context>
+
+<task_overview>
+Follow this guide to install and wire up the OpenFeature .NET SDK. Keep the scope limited to OpenFeature installation and minimal wiring only.
+</task_overview>
+
+<restrictions>
 **Do not use this for:**
-
 - Browser-based apps (use client SDKs instead)
 - Mobile apps (Android/iOS)
+</restrictions>
 
+<prerequisites>
 ## Required Information
 
 Before proceeding, confirm:
@@ -14,25 +32,28 @@ Before proceeding, confirm:
 - [ ] .NET 8+ is installed (or .NET Framework 4.6.2+)
 - [ ] Your project type (Console, ASP.NET Core, etc.) and entry point
 - [ ] Do you want to install any provider(s) alongside the OpenFeature .NET SDK? If not provided, this guide will use an example in-memory provider.
-
-References:
-
-- OpenFeature .NET SDK docs: [OpenFeature .NET SDK](https://openfeature.dev/docs/reference/technologies/server/dotnet)
+</prerequisites>
 
 ## Installation Steps
 
-### 1. Install the OpenFeature .NET SDK
+### Step 1: Install the OpenFeature .NET SDK
 
-Initialize a project (if needed) and add the package.
+Initialize a project and add the package:
 
 ```bash
 dotnet new console
 dotnet add package OpenFeature
 ```
 
-### 2. Set up OpenFeature with the example in-memory provider
+<verification_checkpoint>
+**Verify before continuing:**
+- [ ] Package added successfully
+- [ ] Project builds after restore
+</verification_checkpoint>
 
-Initialize OpenFeature early in application startup and set the example in-memory provider. Replace with a real provider from the OpenFeature ecosystem when ready.
+### Step 2: Set up OpenFeature with the example in-memory provider
+
+Initialize early and set the example in-memory provider. Replace with a real provider from the OpenFeature ecosystem when ready.
 
 ```csharp
 using System;
@@ -64,7 +85,6 @@ public class Program
     }
     catch (Exception ex)
     {
-      // Handle initialization failure
       Console.Error.WriteLine(ex);
       return;
     }
@@ -78,9 +98,15 @@ public class Program
 }
 ```
 
-### 3. Update the evaluation context
+<verification_checkpoint>
+**Verify before continuing:**
+- [ ] Provider set via `await Api.Instance.SetProviderAsync(...)`
+- [ ] App builds and starts without OpenFeature errors
+</verification_checkpoint>
 
-Provide user or environment attributes via the evaluation context to enable targeting of your feature flags.
+### Step 3: Update the evaluation context
+
+Provide user or environment attributes via the evaluation context to enable targeting.
 
 ```csharp
 using OpenFeature;
@@ -99,7 +125,7 @@ var clientCtx = EvaluationContext.Builder()
   .Build();
 client.SetContext(clientCtx);
 
-// Create a per-invocation/request context (recommended)
+// Per-invocation/request context (recommended)
 var requestCtx = EvaluationContext.Builder()
   .Set("targetingKey", "user-123")
   .Set("email", "user@example.com")
@@ -108,9 +134,7 @@ var requestCtx = EvaluationContext.Builder()
 bool flagValue = await client.GetBooleanValueAsync("some-flag", false, requestCtx);
 ```
 
-### 4. Evaluate flags with the client
-
-Create a client and evaluate feature flag values.
+### Step 4: Evaluate flags with the client
 
 ```csharp
 using OpenFeature;
@@ -140,13 +164,19 @@ var defaultStructure = new Structure(new Dictionary<string, Value>
 Structure config = await client.GetObjectValueAsync("ui-config", defaultStructure, ctx);
 ```
 
+<success_criteria>
+## Installation Success Criteria
+- ✅ OpenFeature .NET SDK installed
+- ✅ Provider initialized via `SetProviderAsync(...)`
+- ✅ Application builds and runs without errors
+- ✅ Evaluation context can be set and used in evaluations
+</success_criteria>
+
 ## Optional advanced usage
 
 Only implement the following optional sections if requested.
 
 ### Dependency Injection (ASP.NET Core)
-
-Register OpenFeature in the service container and configure an in-memory provider.
 
 ```csharp
 // Program.cs (.NET 8)
@@ -163,15 +193,36 @@ app.Run();
 
 Reference: [Dependency Injection (OpenFeature .NET SDK)](https://openfeature.dev/docs/reference/technologies/server/dotnet#dependency-injection)
 
-### Multi-Provider (combine multiple providers)
+### Multi-Provider
 
-If you want a single OpenFeature client that aggregates multiple providers, use the multi-provider capabilities. Configure providers in precedence order and choose a strategy to select results.
+The Multi-Provider enables the use of multiple underlying feature flag providers simultaneously, allowing different providers to be used for different flag keys or based on specific evaluation strategies.
+
+```csharp
+using OpenFeature.Providers.MultiProvider;
+using OpenFeature.Providers.MultiProvider.Models;
+using OpenFeature.Providers.MultiProvider.Strategies;
+
+// Create provider entries
+var providerEntries = new List<ProviderEntry>
+{
+    new(new InMemoryProvider(provider1Flags), "Provider1"),
+    new(new InMemoryProvider(provider2Flags), "Provider2")
+};
+
+// Create multi-provider with FirstMatchStrategy (default)
+var multiProvider = new MultiProvider(providerEntries, new FirstMatchStrategy());
+
+// Set as the default provider
+await Api.Instance.SetProviderAsync(multiProvider);
+
+// Use normally - the multi-provider will handle delegation
+var client = Api.Instance.GetClient();
+var flagValue = await client.GetBooleanValueAsync("my-flag", false);
+```
 
 Reference: [Multi-Provider (OpenFeature .NET SDK)](https://openfeature.dev/docs/reference/technologies/server/dotnet#multi-provider)
 
 ### Logging
-
-Attach a logging hook (Microsoft.Extensions.Logging) to log detailed evaluation information.
 
 ```csharp
 using Microsoft.Extensions.Logging;
@@ -189,8 +240,6 @@ Reference: [Logging (OpenFeature .NET SDK)](https://openfeature.dev/docs/referen
 
 ### Shutdown
 
-Gracefully clean up all registered providers on application shutdown.
-
 ```csharp
 using OpenFeature;
 
@@ -199,19 +248,21 @@ Api.Instance.Shutdown();
 
 Reference: [Shutdown (OpenFeature .NET SDK)](https://openfeature.dev/docs/reference/technologies/server/dotnet#shutdown)
 
+<troubleshooting>
 ## Troubleshooting
+- **.NET version**: Ensure .NET 8+ (or .NET Framework 4.6.2+).
+- **Provider not ready / values are defaults**: Await `SetProviderAsync(...)` and evaluate after initialization.
+- **Context not applied**: Pass an `EvaluationContext` with a `targetingKey`; set global/client contexts for shared values.
+- **NuGet issues**: Clear cache (`dotnet nuget locals all --clear`) and check package sources/versions.
+</troubleshooting>
 
-- **.NET version**: Ensure .NET 8+ (or .NET Framework 4.6.2+) per SDK requirements.
-- **Provider not ready / values are defaults**: Await `SetProviderAsync(...)` at startup and evaluate flags after initialization.
-- **Context not applied**: Pass an `EvaluationContext` with a `targetingKey` for per-request evaluations; use global/client setters for shared values.
-- **NuGet issues**: Clear cache (`dotnet nuget locals all --clear`) and ensure package sources and versions are compatible.
+<next_steps>
+## Next steps
+- If you want a real provider, specify which provider(s) to install now; otherwise continue with the example in-memory provider.
+- Add flags with `client.Get<Type>ValueAsync` methods and wire business logic to feature decisions.
+- Consider using dependency injection and multi-provider for advanced scenarios.
+</next_steps>
 
 ## Helpful resources
 
 - OpenFeature .NET SDK docs: [OpenFeature .NET SDK](https://openfeature.dev/docs/reference/technologies/server/dotnet)
-
-## Next steps
-
-- If you want a real provider, specify which provider(s) to install now; otherwise continue with the example in-memory provider.
-- Add flags with `client.Get<Type>ValueAsync` methods and wire business logic to feature decisions.
-- Consider using dependency injection and multi-provider for advanced scenarios.
