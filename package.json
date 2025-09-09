@@ -1,25 +1,33 @@
 {
-    "name": "@openfeature/mcp-worker",
+    "name": "@openfeature/mcp",
     "version": "1.0.0",
     "private": true,
     "type": "module",
     "scripts": {
-        "dev": "wrangler dev",
-        "deploy": "yarn build-prompts && wrangler deploy",
-        "build": "yarn build-prompts && tsc",
+        "build": "npm run build-prompts && tsc",
         "type-check": "tsc --noEmit",
-        "cf-typegen": "wrangler types",
-        "build-prompts": "node scripts/build-prompts.js"
+        "start": "node dist/cli.js",
+        "build-prompts": "node scripts/build-prompts.js",
+        "prepack": "npm run build"
     },
+    "bin": {
+        "openfeature-mcp": "dist/cli.js"
+    },
+    "engines": {
+        "node": ">=18.17"
+    },
+    "files": [
+        "dist",
+        "README.md",
+        "LICENSE"
+    ],
     "dependencies": {
         "@modelcontextprotocol/sdk": "^1.17.3",
-        "agents": "^0.0.113",
         "zod": "^3.23.8"
     },
     "devDependencies": {
         "@types/node": "^22.13.10",
-        "typescript": "^5.9.2",
-        "wrangler": "^4.31.0"
+        "typescript": "^5.9.2"
     },
-    "packageManager": "yarn@4.9.2"
+    "packageManager": "npm@11.4.2"
 }

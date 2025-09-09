@@ -1,6 +1,6 @@
 import { z } from "zod";
-import type { OpenFeatureMCPServerInstance, ToolResult } from "../types";
-import { BUNDLED_PROMPTS, INSTALL_GUIDES } from "./promptsBundle.generated";
+import type { OpenFeatureMCPServerInstance, ToolResult } from "../types.js";
+import { BUNDLED_PROMPTS, INSTALL_GUIDES } from "./promptsBundle.generated.js";
 
 const InstallGuideArgsSchema = z.object({
   guide: z.enum(INSTALL_GUIDES),
