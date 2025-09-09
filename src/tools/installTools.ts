@@ -1,6 +1,6 @@
 import { z } from "zod";
-import type { OpenFeatureMCPServerInstance, ToolResult } from "../types";
-import { BUNDLED_PROMPTS, INSTALL_GUIDES } from "./promptsBundle.generated";
+import type { OpenFeatureMCPServerInstance, ToolResult } from "../types.js";
+import { BUNDLED_PROMPTS, INSTALL_GUIDES } from "./promptsBundle.generated.js";
 
 const InstallGuideArgsSchema = z.object({
   guide: z.enum(INSTALL_GUIDES),
@@ -12,9 +12,8 @@ export function registerInstallTools(
   serverInstance.registerToolWithErrorHandling(
     "install_openfeature_sdk",
     {
-      description: `Fetch and return OpenFeature install prompt Markdown by guide name. Available guides: ${INSTALL_GUIDES.join(
-        ", "
-      )}. Input: { guide: string }`,
+      description:
+        "Fetch and return OpenFeature install prompt Markdown by SDK type.",
       inputSchema: InstallGuideArgsSchema.shape,
     },
     async (args: unknown): Promise<ToolResult> => {

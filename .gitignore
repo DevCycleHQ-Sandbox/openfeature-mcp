@@ -11,9 +11,6 @@ node_modules/
 .pnp.cjs
 .pnp.loader.mjs
 
-# Cloudflare Workers
-.wrangler/
-
 # TypeScript build outputs
 dist/
 *.tsbuildinfo

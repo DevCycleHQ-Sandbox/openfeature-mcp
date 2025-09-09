@@ -1,23 +1,18 @@
-# OpenFeature MCP Cloudflare Worker
+# OpenFeature MCP Local Server (stdio)
 
 ### Warning
 
 **This project is in active development and intended for testing only. APIs, prompts, and behavior may change without notice. Do not use in production.**
 
-A simplified Model Context Protocol (MCP) server running on Cloudflare Workers that provides OpenFeature SDK installation guidance.
+A local Model Context Protocol (MCP) server that provides OpenFeature SDK installation guidance over stdio.
 
 ## Features
 
 - **No Authentication Required**: Simplified implementation without OAuth or user management
 - **OpenFeature SDK Installation Guides**: Fetch installation prompts for various OpenFeature SDKs
-- **MCP Protocol Support**: Supports both SSE and JSON-RPC transports
-- **Cloudflare Workers**: Serverless deployment with global edge distribution
+- **MCP stdio Transport**: Intended for local usage by MCP-compatible clients
 
-## Configure your AI client
-
-Use the hosted endpoint for this OpenFeature MCP worker: `https://mcp-openfeature.devcycle.com/mcp`
-
-No authentication is required for this MCP.
+## Configure your AI client (local)
 
 ### Cursor
 
@@ -27,7 +22,8 @@ Add to `~/.cursor/mcp_settings.json`:
 {
   "mcpServers": {
     "OpenFeature": {
-      "url": "https://mcp-openfeature.devcycle.com/mcp"
+      "command": "npx",
+      "args": ["-y", "@openfeature/mcp"]
     }
   }
 }
@@ -41,7 +37,8 @@ Add to `.continue/config.json`:
 {
   "mcpServers": {
     "OpenFeature": {
-      "url": "https://mcp-openfeature.devcycle.com/mcp"
+      "command": "npx",
+      "args": ["-y", "@openfeature/mcp"]
     }
   }
 }
@@ -49,11 +46,28 @@ Add to `.continue/config.json`:
 
 ### Claude Code (CLI)
 
+Add the server via CLI:
+
 ```bash
-claude mcp add --transport http openfeature https://mcp-openfeature.devcycle.com/mcp
+claude mcp add --transport stdio openfeature npx -y @openfeature/mcp
 ```
 
 Then manage the connection in the CLI with `/mcp`.
+
+### Windsurf
+
+In the "Manage MCP servers" raw config, add:
+
+```json
+{
+  "mcpServers": {
+    "OpenFeature": {
+      "command": "npx",
+      "args": ["-y", "@openfeature/mcp"]
+    }
+  }
+}
+```
 
 ### Claude Desktop
 
@@ -64,7 +78,7 @@ Edit your Claude Desktop config and add:
   "mcpServers": {
     "openfeature": {
       "command": "npx",
-      "args": ["mcp-remote", "https://mcp-openfeature.devcycle.com/mcp"]
+      "args": ["-y", "@openfeature/mcp"]
     }
   }
 }
@@ -72,21 +86,27 @@ Edit your Claude Desktop config and add:
 
 Restart Claude Desktop after saving.
 
-### Windsurf
+## NPM Global install (optional)
 
-In the "Manage MCP servers" raw config, add:
+If you prefer a global install instead of NPX:
+
+```bash
+npm install -g @openfeature/mcp
+```
+
+Now in your MCP config use `openfeature-mcp` as the command:
 
 ```json
 {
   "mcpServers": {
-    "OpenFeature": {
-      "serverUrl": "https://mcp-openfeature.devcycle.com/mcp"
+    "openfeature": {
+      "command": "openfeature-mcp"
     }
   }
 }
 ```
 
-Reference installation patterns adapted from the DevCycle MCP getting started guide [DevCycle MCP Getting Started](https://docs.devcycle.com/cli-mcp/mcp-getting-started).
+All logs are written to stderr. The MCP protocol messages use stdout.
 
 ## Available Tools
 
@@ -111,73 +131,32 @@ Fetches and returns OpenFeature SDK install prompt Markdown for a given guide fr
 - react
 - ruby
 
-## Endpoints
-
-- `/mcp` - MCP JSON-RPC transport endpoint
-- `/sse` - MCP Server-Sent Events transport endpoint
-- `/health` - Health check endpoint
-- `/info` - Service information endpoint (includes available guides)
-- `/` - Redirects to OpenFeature docs reference intro
-
 ## Development
 
 ### Prerequisites
 
 - Node.js 18+
-- Yarn (using regular node_modules, not PnP)
-- Wrangler CLI
 
 ### Setup
 
 1. Install dependencies:
    ```bash
-   yarn install
+   npm install
    ```
 
 2. Add or edit install guides in the `prompts/` folder (Markdown). These are bundled at build time.
 
 3. Build prompts bundle:
    ```bash
-   yarn build-prompts
+   npm run build-prompts
    ```
 
-4. Run locally:
+4. Build TypeScript:
    ```bash
-   yarn dev
+   npm run build
    ```
 
-5. Build for production:
+5. Run locally (binary entrypoint):
    ```bash
-   yarn build
+   node dist/cli.js
    ```
-
-### Deployment
-
-Deploy to Cloudflare Workers:
-
-```bash
-yarn deploy
-```
-
-## Usage
-
-The worker exposes MCP transport endpoints and simple health/info endpoints.
-
-### Examples
-
-1. **Health:**
-   ```bash
-   curl http://localhost:8787/health
-   ```
-
-2. **Info:**
-   ```bash
-   curl http://localhost:8787/info
-   ```
-
-3. **MCP over HTTP (JSON-RPC) or SSE:**
-   Point your MCP-compatible client to `/mcp` (JSON-RPC) or `/sse` (SSE). The tool name is `install_openfeature_sdk` and requires an input object like `{ "guide": "react" }`.
-
-## Architecture
-
-This is a simplified version of the DevCycle MCP worker, with all authentication and project management features removed. It focuses solely on providing OpenFeature SDK installation guidance through MCP tool calls.
