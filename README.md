@@ -14,23 +14,6 @@ A local Model Context Protocol (MCP) server that provides OpenFeature SDK instal
 
 ## Configure your AI client (local)
 
-### Claude Desktop
-
-Edit your Claude Desktop config and add:
-
-```json
-{
-  "mcpServers": {
-    "openfeature": {
-      "command": "npx",
-      "args": ["-y", "@openfeature/mcp"]
-    }
-  }
-}
-```
-
-Restart Claude Desktop after saving.
-
 ### Cursor
 
 Add to `~/.cursor/mcp_settings.json`:
@@ -61,19 +44,66 @@ Add to `.continue/config.json`:
 }
 ```
 
-## NPX usage
+### Claude Code (CLI)
 
-- One-shot run:
+Add the server via CLI:
 
 ```bash
-npx -y @openfeature/mcp
+claude mcp add --transport stdio openfeature npx -y @openfeature/mcp
 ```
 
-- Installed binary (after cloning/building):
+Then manage the connection in the CLI with `/mcp`.
+
+### Windsurf
+
+In the "Manage MCP servers" raw config, add:
+
+```json
+{
+  "mcpServers": {
+    "OpenFeature": {
+      "command": "npx",
+      "args": ["-y", "@openfeature/mcp"]
+    }
+  }
+}
+```
+
+### Claude Desktop
+
+Edit your Claude Desktop config and add:
+
+```json
+{
+  "mcpServers": {
+    "openfeature": {
+      "command": "npx",
+      "args": ["-y", "@openfeature/mcp"]
+    }
+  }
+}
+```
+
+Restart Claude Desktop after saving.
+
+## NPM Global install (optional)
+
+If you prefer a global install instead of NPX:
 
 ```bash
-yarn build
-npx openfeature-mcp
+npm install -g @openfeature/mcp
+```
+
+Now in your MCP config use `openfeature-mcp` as the command:
+
+```json
+{
+  "mcpServers": {
+    "openfeature": {
+      "command": "openfeature-mcp"
+    }
+  }
+}
 ```
 
 All logs are written to stderr. The MCP protocol messages use stdout.
