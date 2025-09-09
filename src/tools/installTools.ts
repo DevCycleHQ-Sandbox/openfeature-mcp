@@ -12,9 +12,8 @@ export function registerInstallTools(
   serverInstance.registerToolWithErrorHandling(
     "install_openfeature_sdk",
     {
-      description: `Fetch and return OpenFeature install prompt Markdown by guide name. Available guides: ${INSTALL_GUIDES.join(
-        ", "
-      )}. Input: { guide: string }`,
+      description:
+        "Fetch and return OpenFeature install prompt Markdown by SDK type.",
       inputSchema: InstallGuideArgsSchema.shape,
     },
     async (args: unknown): Promise<ToolResult> => {

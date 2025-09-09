@@ -65,6 +65,7 @@ export function createServer(): McpServer {
 }
 
 export async function startServer(): Promise<void> {
+  // Error logs must be used here as stdout is used for MCP protocol messages
   console.error("Initializing OpenFeature MCP local server", {
     version: workerVersion,
   });

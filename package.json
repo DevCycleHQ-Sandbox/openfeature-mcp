@@ -1,6 +1,6 @@
 {
     "name": "@openfeature/mcp",
-    "version": "1.0.0",
+    "version": "0.0.1",
     "private": true,
     "type": "module",
     "scripts": {
@@ -22,7 +22,7 @@
         "LICENSE"
     ],
     "dependencies": {
-        "@modelcontextprotocol/sdk": "^1.17.3",
+        "@modelcontextprotocol/sdk": "^1.17.5",
         "zod": "^3.23.8"
     },
     "devDependencies": {
