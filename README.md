@@ -112,6 +112,57 @@ All logs are written to stderr. The MCP protocol messages use stdout.
 
 ### `install_openfeature_sdk`
 
+### `ofrep_flag_eval`
+
+Evaluate flags using the OpenFeature Remote Evaluation Protocol (OFREP) [specification](`https://github.com/open-feature/protocol`). If `flag_key` is provided, performs a single-flag evaluation; otherwise, performs a bulk evaluation per the [OpenAPI definition](`https://raw.githubusercontent.com/open-feature/protocol/refs/heads/main/service/openapi.yaml`).
+
+Inputs:
+
+- `baseUrl` (string, optional): Base URL of your OFREP service (e.g. `https://flags.example.com`). If omitted, uses `OFREP_BASE_URL` env var.
+- `flag_key` (string, optional): When set, uses single-flag endpoint; otherwise uses bulk endpoint.
+- `targetingKey` (string, optional): Added to the evaluation context as `context.targetingKey`.
+- `context` (object, optional): Additional evaluation context properties.
+- `apiKey` (string, optional): Sends `x-api-key` header. If omitted, uses `OFREP_API_KEY` env var.
+- `bearerToken` (string, optional): Sends `Authorization: Bearer ...`. If omitted, uses `OFREP_BEARER_TOKEN` env var.
+- `headers` (object, optional): Extra headers to include.
+- `ifNoneMatch` (string, optional): ETag for bulk evaluation cache validation. Returns 304 if not modified.
+- `timeoutMs` (number, optional): Request timeout in milliseconds.
+
+Output:
+
+- JSON string with `status`, optional `etag`, and `data` (parsed response). If bulk eval returns 304, `notModified: true` is set.
+
+Examples:
+
+Bulk evaluation with env-configured auth:
+
+```json
+{
+  "baseUrl": "https://flags.example.com",
+  "context": { "plan": "pro" },
+  "ifNoneMatch": "\"etag-from-previous-call\""
+}
+```
+
+Single flag evaluation with explicit bearer token:
+
+```json
+{
+  "baseUrl": "https://flags.example.com",
+  "flag_key": "my-flag",
+  "targetingKey": "user-123",
+  "bearerToken": "<token>"
+}
+```
+
+Authentication configuration options:
+
+- Environment variables: set `OFREP_BASE_URL`, `OFREP_API_KEY`, and/or `OFREP_BEARER_TOKEN` before launching the server.
+- MCP client config (when supported): some clients allow passing env into the MCP server command. For example, you can wrap the `npx` call in a shell script that exports env vars.
+- Local shell profile: export the variables in your shell (e.g., `.bashrc`, `.zshrc`) so they apply to the `npx @openfeature/mcp` invocation.
+
+References: [OFREP repository](`https://github.com/open-feature/protocol`), [OFREP OpenAPI](`https://raw.githubusercontent.com/open-feature/protocol/refs/heads/main/service/openapi.yaml`).
+
 Fetches and returns OpenFeature SDK install prompt Markdown for a given guide from the bundled prompts.
 
 **Parameters:**
