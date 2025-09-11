@@ -4,6 +4,7 @@ import type { ZodRawShape } from "zod";
 import type { ToolAnnotations } from "@modelcontextprotocol/sdk/types.js";
 import { workerVersion } from "./version.js";
 import { registerInstallTools } from "./tools/installTools.js";
+import { registerOfrepTools } from "./tools/ofrepTools.js";
 import type { OpenFeatureMCPServerInstance, ToolResult } from "./types.js";
 
 function handleToolError(error: unknown, toolName: string): ToolResult {
@@ -60,6 +61,7 @@ export function createServer(): McpServer {
   };
 
   registerInstallTools(serverAdapter);
+  registerOfrepTools(serverAdapter);
 
   return server;
 }
