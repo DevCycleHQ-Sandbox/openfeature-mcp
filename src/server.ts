@@ -2,9 +2,9 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import type { ZodRawShape } from "zod";
 import type { ToolAnnotations } from "@modelcontextprotocol/sdk/types.js";
-import { workerVersion } from "./version.js";
 import { registerInstallTools } from "./tools/installTools.js";
 import type { OpenFeatureMCPServerInstance, ToolResult } from "./types.js";
+import packageJson from "../package.json" with { type: "json" };
 
 function handleToolError(error: unknown, toolName: string): ToolResult {
   const errorMessage =
@@ -23,7 +23,7 @@ function handleToolError(error: unknown, toolName: string): ToolResult {
 export function createServer(): McpServer {
   const server = new McpServer({
     name: "OpenFeature MCP Server",
-    version: workerVersion,
+    version: packageJson.version,
   });
 
   const serverAdapter: OpenFeatureMCPServerInstance = {
@@ -67,7 +67,7 @@ export function createServer(): McpServer {
 export async function startServer(): Promise<void> {
   // Error logs must be used here as stdout is used for MCP protocol messages
   console.error("Initializing OpenFeature MCP local server", {
-    version: workerVersion,
+    version: packageJson.version,
   });
 
   const server = createServer();
