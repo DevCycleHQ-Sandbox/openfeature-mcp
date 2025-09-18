@@ -17,6 +17,7 @@ dist/
 
 # Generated files (auto-generated, do not edit)
 src/tools/promptsBundle.generated.ts
+src/tools/providersBundle.generated.ts
 src/**/*.js
 src/**/*.js.map  
 src/**/*.d.ts

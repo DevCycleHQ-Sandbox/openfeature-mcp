@@ -6,138 +6,160 @@
  * information at build time for environments without file system access.
  *
  * Usage:
- *   OPENFEATURE_PROVIDERS_DIR=/path/to/openfeature.dev/src/datasets/providers \
  *   node scripts/build-providers.js
  */
 
 import fs from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import ts from 'typescript';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const OUTPUT_FILE = path.join(__dirname, '..', 'src', 'tools', 'providersBundle.generated.ts');
 
-function getProvidersDir() {
-  // Allow override via env var. If not set, we can't discover providers.
-  const envDir = process.env.OPENFEATURE_PROVIDERS_DIR;
-  if (envDir && envDir.trim()) return envDir.trim();
-  return null;
-}
+const ALLOWED_GUIDES = [
+  'kotlin', 'dotnet', 'go', 'swift', 'java', 'javascript', 'nestjs', 'nodejs', 'php', 'python', 'react', 'ruby',
+];
+const techToGuideMap = {
+  '.net': 'dotnet'
+};
 
-async function listProviderFiles(dir) {
-  try {
-    const files = await fs.readdir(dir);
-    return files.filter(f => f.endsWith('.ts'));
-  } catch (err) {
-    console.warn('⚠️  Could not read providers directory:', err?.message || err);
-    return [];
+function getGithubHeaders() {
+  const headers = {
+    'Accept': 'application/vnd.github.v3+json',
+    'User-Agent': 'openfeature-mcp-build-script'
+  };
+  if (process.env.GITHUB_TOKEN) {
+    headers['Authorization'] = `Bearer ${process.env.GITHUB_TOKEN}`;
   }
+  return headers;
 }
 
-async function readProviderFile(filePath) {
-  try {
-    return await fs.readFile(filePath, 'utf-8');
-  } catch (err) {
-    console.warn(`⚠️  Could not read provider file: ${path.basename(filePath)}`);
+async function fetchProviderDirectoryListing() {
+  const apiUrl = 'https://api.github.com/repos/open-feature/openfeature.dev/contents/src/datasets/providers?ref=main';
+  const res = await fetch(apiUrl, { headers: getGithubHeaders() });
+  if (!res.ok) {
+    throw new Error(`GitHub API error ${res.status}: ${await res.text()}`);
+  }
+  /** @type {Array<{name:string,type:string,download_url?:string}>} */
+  const data = await res.json();
+  return data.filter(entry => entry.type === 'file' && entry.name.endsWith('.ts'));
+}
+
+async function fetchRemoteProviderFile(downloadUrl) {
+  const res = await fetch(downloadUrl, { headers: { 'User-Agent': 'openfeature-mcp-build-script' } });
+  if (!res.ok) {
+    console.warn(`⚠️  Could not fetch provider file from ${downloadUrl}: ${res.status}`);
     return null;
   }
+  return await res.text();
 }
 
-function extractDocsUrl(fileContent) {
-  // Heuristic: prefer URLs assigned to fields named url/link/docs or inside an object with key 'url'.
-  const urlFieldRegex = /(url|link|docs)\s*:\s*['"](https?:\/\/[^'"\s)]+)['"]/i;
-  const match = fileContent.match(urlFieldRegex);
-  if (match) return match[2];
+// No local directory fallback; always fetch from GitHub
 
-  // Fallback: first http(s) URL in the file
-  const anyUrlRegex = /https?:\/\/[^'"\s)]+/i;
-  const anyMatch = fileContent.match(anyUrlRegex);
-  return anyMatch ? anyMatch[0] : '';
-}
+// Extract per-guide docs strictly from technologies[].href using TypeScript AST
+function extractDocsUrlByTech(fileContent) {
+  /** @type {Record<string, string>} */
+  const byTech = {};
+  const sf = ts.createSourceFile('provider.ts', fileContent, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
 
-function extractSupportedTechnologies(fileContent) {
-  // Heuristic: look for arrays of strings under keys like supportedTechnologies/technologies/sdks/languages
-  const arrayRegexes = [
-    /supported\s*(technologies|sdks|sdksList|languages)?\s*:\s*\[([\s\S]*?)\]/i,
-    /technologies\s*:\s*\[([\s\S]*?)\]/i,
-    /sdks\s*:\s*\[([\s\S]*?)\]/i,
-    /languages\s*:\s*\[([\s\S]*?)\]/i,
-  ];
-  for (const re of arrayRegexes) {
-    const m = fileContent.match(re);
-    if (m) {
-      const inner = m[m.length - 1];
-      const items = inner
-        .split(',')
-        .map(s => s.trim())
-        .map(s => s.replace(/^['"]|['"]$/g, ''))
-        .filter(Boolean);
-      if (items.length) return items;
+  function getStringLiteralValue(node) {
+    return ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node) ? node.text : null;
+  }
+
+  function asObjectLiteral(node) {
+    return ts.isParenthesizedExpression(node) && ts.isObjectLiteralExpression(node.expression)
+      ? node.expression
+      : ts.isObjectLiteralExpression(node)
+      ? node
+      : null;
+  }
+
+  function findTechnologiesArray(obj) {
+    if (!obj) return null;
+    for (const prop of obj.properties) {
+      if (ts.isPropertyAssignment(prop)) {
+        const nameText = ts.isIdentifier(prop.name) || ts.isStringLiteral(prop.name) ? prop.name.text.toLowerCase() : '';
+        if (nameText === 'technologies' && ts.isArrayLiteralExpression(prop.initializer)) {
+          return prop.initializer;
+        }
+      }
     }
+    return null;
   }
-  // Fallback: empty list
-  return [];
-}
 
-function normalizeTechnologyName(name) {
-  // Normalize common tech names to match our install guide keys if possible
-  const n = name.toLowerCase();
-  switch (n) {
-    case 'js':
-    case 'javascript':
-      return 'javascript';
-    case 'node':
-    case 'nodejs':
-      return 'nodejs';
-    case 'react':
-      return 'react';
-    case 'java':
-      return 'java';
-    case 'go':
-    case 'golang':
-      return 'go';
-    case 'python':
-      return 'python';
-    case 'ruby':
-      return 'ruby';
-    case 'php':
-      return 'php';
-    case 'android':
-      return 'android';
-    case 'ios':
-      return 'ios';
-    case 'dotnet':
-    case '.net':
-    case 'c#':
-      return 'dotnet';
-    case 'nestjs':
-      return 'nestjs';
-    default:
-      return n;
+  function visit(node) {
+    if (
+      ts.isVariableStatement(node) &&
+      node.modifiers && node.modifiers.some(m => m.kind === ts.SyntaxKind.ExportKeyword)
+    ) {
+      for (const decl of node.declarationList.declarations) {
+        const obj = asObjectLiteral(decl.initializer);
+        if (!obj) continue;
+        const techArr = findTechnologiesArray(obj);
+        if (!techArr) continue;
+        
+        for (const el of techArr.elements) {
+          if (!ts.isObjectLiteralExpression(el)) continue;
+          let techName = null;
+          let href = null;
+
+          for (const p of el.properties) {
+            if (!ts.isPropertyAssignment(p)) continue;
+            const key = ts.isIdentifier(p.name) || ts.isStringLiteral(p.name) ? p.name.text.toLowerCase() : '';
+            if (key === 'technology') {
+              techName = getStringLiteralValue(p.initializer).toLowerCase();
+            } else if (key === 'href') {
+              href = getStringLiteralValue(p.initializer);
+            }
+          }
+
+          if (techName && href) {
+            const guide = techToGuideMap[techName] || (ALLOWED_GUIDES.includes(techName) ? techName : null);
+            if (guide && !byTech[guide]) {
+              byTech[guide] = href;
+            }
+          }
+        }
+      }
+    }
+    ts.forEachChild(node, visit);
   }
+
+  visit(sf);
+  return byTech;
 }
 
 async function buildProvidersBundle() {
   console.log('🔨 Building providers bundle...');
-  const providersDir = getProvidersDir();
   const result = [];
 
-  if (!providersDir) {
-    console.warn('⚠️  OPENFEATURE_PROVIDERS_DIR not set. Generating empty providers bundle.');
-  } else {
-    const files = await listProviderFiles(providersDir);
-    for (const file of files) {
-      const full = path.join(providersDir, file);
-      const content = await readProviderFile(full);
+  try {
+    console.log('🌐 Fetching providers from GitHub repository open-feature/openfeature.dev ...');
+    const listing = await fetchProviderDirectoryListing();
+    
+    for (const entry of listing) {
+      if (!entry.download_url) continue;
+
+      const content = await fetchRemoteProviderFile(entry.download_url);
       if (!content) continue;
-      const base = path.basename(file, '.ts');
-      const docsUrl = extractDocsUrl(content);
-      const techs = extractSupportedTechnologies(content).map(normalizeTechnologyName);
-      result.push({ name: base, docsUrl, technologies: Array.from(new Set(techs)) });
-      console.log(`✅ ${base}: Parsed`);
+
+      const base = path.basename(entry.name, '.ts');
+      if (base === 'index') continue; // skip barrel files
+      
+      // Build per-guide docs from href entries only
+      const docsUrlByGuide = extractDocsUrlByTech(content);
+      if (Object.keys(docsUrlByGuide).length === 0) {
+        console.log(`⏭️  ${base}: Skipped (no docs URLs detected)`);
+        continue;
+      }
+      result.push({ name: base, docsUrlByGuide });
+      console.log(`✅ ${base}: Parsed (remote)`);
     }
+  } catch (err) {
+    console.warn('⚠️  Failed to fetch providers from GitHub:', err?.message || err);
   }
 
   // Generate TypeScript file
@@ -145,14 +167,14 @@ async function buildProvidersBundle() {
   const hasProviders = providerNames.length > 0;
   const providersArray = providerNames.map(p => `  '${p}',`).join('\n');
   const supportEntries = result
-    .map(r => `  '${r.name}': { docsUrl: ${JSON.stringify(r.docsUrl)}, supportedGuides: [${r.technologies.map(t => `'${t}'`).join(', ')}] as typeof INSTALL_GUIDES[number][] },`)
+    .map(r => `  '${r.name}': ${JSON.stringify(r.docsUrlByGuide)} ,`)
     .join('\n');
 
   const tsContent = `// AUTO-GENERATED FILE - Do not edit manually
 // Generated by scripts/build-providers.js
 
 import { z } from 'zod';
-import { INSTALL_GUIDES } from './promptsBundle.generated.js';
+import { type InstallGuide } from './promptsBundle.generated.js';
 
 export const PROVIDERS = [
 ${providersArray}
@@ -162,7 +184,7 @@ export type ProviderName = ${hasProviders ? "typeof PROVIDERS[number]" : "string
 
 export const providersSchema = z.array(${hasProviders ? "z.enum(PROVIDERS)" : "z.string()"}).default([]);
 
-export const PROVIDER_SUPPORT: Record<ProviderName${hasProviders ? '' : ' | string'}, { docsUrl: string; supportedGuides: typeof INSTALL_GUIDES[number][] }> = {
+export const PROVIDER_DOCS: Record<ProviderName${hasProviders ? '' : ' | string'}, Partial<Record<InstallGuide, string>>> = {
 ${supportEntries}
 };
 `;

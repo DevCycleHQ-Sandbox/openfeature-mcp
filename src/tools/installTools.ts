@@ -1,10 +1,17 @@
 import { z } from "zod";
 import type { OpenFeatureMCPServerInstance, ToolResult } from "../types.js";
-import { BUNDLED_PROMPTS, INSTALL_GUIDES } from "./promptsBundle.generated.js";
-import { PROVIDER_SUPPORT, providersSchema } from "./providersBundle.generated.js";
+import {
+  BUNDLED_PROMPTS,
+  InstallGuideSchema,
+} from "./promptsBundle.generated.js";
+import {
+  PROVIDER_DOCS,
+  providersSchema,
+  type ProviderName,
+} from "./providersBundle.generated.js";
 
 const InstallGuideArgsSchema = z.object({
-  guide: z.enum(INSTALL_GUIDES),
+  guide: InstallGuideSchema,
   providers: providersSchema.optional().default([]),
 });
 
@@ -19,42 +26,38 @@ export function registerInstallTools(
       inputSchema: InstallGuideArgsSchema.shape,
     },
     async (args: unknown): Promise<ToolResult> => {
-      const parsed = InstallGuideArgsSchema.safeParse(args);
-      if (!parsed.success) {
-        return {
-          content: [
-            {
-              type: "text" as const,
-              text: `Invalid input: ${parsed.error.message}`,
-            },
-          ],
-        };
-      }
-
-      const guide = parsed.data.guide;
-      const providers: string[] = parsed.data.providers ?? [];
-      const prompt: string = BUNDLED_PROMPTS[guide as (typeof INSTALL_GUIDES)[number]];
+      const { guide, providers } = InstallGuideArgsSchema.parse(args);
+      const prompt: string = BUNDLED_PROMPTS[guide];
 
       // Build provider-specific notes
       const providerNotes: string[] = [];
+
       for (const providerName of providers) {
-        const support = PROVIDER_SUPPORT[providerName as string];
-        if (!support) {
-          providerNotes.push(`- ${providerName}: Not recognized.`);
-          continue;
+        const providerDocLinks = PROVIDER_DOCS[providerName];
+        if (!providerDocLinks) {
+          throw new Error(
+            `Provider '${providerName}' is not recognized. Available providers: ${Object.keys(
+              PROVIDER_DOCS
+            ).join(", ")}`
+          );
         }
-        const supportsGuide = support.supportedGuides.includes(guide as (typeof INSTALL_GUIDES)[number]);
-        if (supportsGuide) {
-          const url = support.docsUrl || "";
-          const link = url ? ` (${url})` : "";
-          providerNotes.push(`- ${providerName}: Supported for ${guide}.${link}`);
+
+        const perGuideUrl = providerDocLinks[guide] || "";
+        if (perGuideUrl) {
+          providerNotes.push(
+            `- **${providerName}**: Fetch the provider installation instructions from this link: ${perGuideUrl}. Follow the documentation to install and configure this provider alongside the OpenFeature ${guide} SDK.`
+          );
         } else {
-          providerNotes.push(`- ${providerName}: Not listed as supporting ${guide}.`);
+          providerNotes.push(
+            `- **${providerName}**: No specific ${guide} documentation URL found. Search for "${providerName} OpenFeature ${guide}" installation documentation and provide installation instructions if available.`
+          );
         }
       }
 
       const providersAppendix = providerNotes.length
-        ? `\n\n---\n\nProvider installation references for ${guide}:\n\n${providerNotes.join("\n")}`
+        ? `\n\n---\n\nProvider installation instructions for ${guide}:\n\n${providerNotes.join(
+            "\n"
+          )}`
         : "";
       return {
         content: [
