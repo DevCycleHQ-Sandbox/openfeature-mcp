@@ -131,6 +131,41 @@ Fetches and returns OpenFeature SDK install prompt Markdown for a given technolo
 - react
 - ruby
 
+### `ofrep_flag_eval`
+
+Evaluate feature flags via OpenFeature Remote Evaluation Protocol (OFREP). If `flag_key` is omitted, performs bulk evaluation.
+
+References: [`open-feature/protocol` repo](https://github.com/open-feature/protocol), [OFREP OpenAPI spec](https://raw.githubusercontent.com/open-feature/protocol/refs/heads/main/service/openapi.yaml)
+
+Parameters (all optional unless noted):
+- `base_url` (string, optional): Base URL of your OFREP-compatible flag service. If omitted, the server uses env/config (see below).
+- `flag_key` (string, optional): If provided, calls single flag evaluation: `/ofrep/v1/evaluate/flags/{key}`. If omitted, calls bulk: `/ofrep/v1/evaluate/flags`.
+- `context` (object, optional): Evaluation context, e.g. `{ "targetingKey": "user-123", ... }`.
+- `etag` (string, optional): For bulk requests, sent as `If-None-Match` to enable 304 caching semantics.
+- `auth` (object, optional): Inline auth for this call only.
+  - `bearer_token` (string, optional): Sets `Authorization: Bearer <token>`.
+  - `api_key` (string, optional): Sets `X-API-Key: <key>`.
+
+Auth and base URL resolution (priority):
+1. Tool call args: `base_url`, `auth.bearer_token`, `auth.api_key`
+2. Environment variables: `OPENFEATURE_OFREP_BASE_URL` (or `OFREP_BASE_URL`), `OPENFEATURE_OFREP_BEARER_TOKEN` (or `OFREP_BEARER_TOKEN`), `OPENFEATURE_OFREP_API_KEY` (or `OFREP_API_KEY`)
+3. Config file: `~/.openfeature-mcp.json` (override with `OPENFEATURE_MCP_CONFIG_PATH`)
+
+Example `~/.openfeature-mcp.json`:
+```json
+{
+  "ofrep": {
+    "baseUrl": "https://flags.example.com",
+    "bearerToken": "<token>",
+    "apiKey": "<key>"
+  }
+}
+```
+
+Notes:
+- Bulk requests may return `ETag`. Pass it back via `etag` to leverage 304 Not Modified.
+- Either bearer token or API key can be supplied; both are supported by the spec.
+
 ## Development
 
 ### Prerequisites
