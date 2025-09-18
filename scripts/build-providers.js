@@ -26,6 +26,15 @@ const techToGuideMap = {
   '.net': 'dotnet'
 };
 
+// Special mapping for JavaScript based on category
+function getJavaScriptGuideByCategory(category) {
+  if (Array.isArray(category)) {
+    if (category.includes('Server')) return 'nodejs';
+    if (category.includes('Client')) return 'javascript';
+  }
+  return 'javascript'; // default to client-side
+}
+
 function getGithubHeaders() {
   const headers = {
     'Accept': 'application/vnd.github.v3+json',
@@ -105,19 +114,36 @@ function extractDocsUrlByTech(fileContent) {
           if (!ts.isObjectLiteralExpression(el)) continue;
           let techName = null;
           let href = null;
+          let category = null;
 
           for (const p of el.properties) {
             if (!ts.isPropertyAssignment(p)) continue;
             const key = ts.isIdentifier(p.name) || ts.isStringLiteral(p.name) ? p.name.text.toLowerCase() : '';
             if (key === 'technology') {
-              techName = getStringLiteralValue(p.initializer).toLowerCase();
+              techName = getStringLiteralValue(p.initializer)?.toLowerCase();
             } else if (key === 'href') {
               href = getStringLiteralValue(p.initializer);
+            } else if (key === 'category' && ts.isArrayLiteralExpression(p.initializer)) {
+              // Extract category array
+              category = [];
+              for (const catEl of p.initializer.elements) {
+                const catValue = getStringLiteralValue(catEl);
+                if (catValue) {
+                  category.push(catValue);
+                }
+              }
             }
           }
 
           if (techName && href) {
-            const guide = techToGuideMap[techName] || (ALLOWED_GUIDES.includes(techName) ? techName : null);
+            let guide;
+            // Special handling for JavaScript based on category
+            if (techName === 'javascript') {
+              guide = getJavaScriptGuideByCategory(category);
+            } else {
+              guide = techToGuideMap[techName] || (ALLOWED_GUIDES.includes(techName) ? techName : null);
+            }
+            
             if (guide && !byTech[guide]) {
               byTech[guide] = href;
             }
