@@ -9,6 +9,7 @@ import {
   providersSchema,
   type ProviderName,
 } from "./providersBundle.generated.js";
+import { buildProviderResourceLinks } from "../resources.js";
 
 const InstallGuideArgsSchema = z.object({
   guide: InstallGuideSchema,
@@ -35,9 +36,16 @@ function buildProviderPrompts(
     console.error(`guide: ${guide}`);
     const perGuideUrl = providerDocLinks[guide] || "";
     if (perGuideUrl) {
-      providerPrompts.push(
-        `- **${providerName}**: Read the provider documentation from this link: ${perGuideUrl} and evaluate the best way to install and configure this provider alongside the OpenFeature ${guide} SDK.`
-      );
+      if (process.env.ENABLE_RESOURCE_LINKS) {
+        const resourceName = `of-provider-doc:${providerName}:${guide}`;
+        providerPrompts.push(
+          `- **${providerName}**: A resource is provided below. If your host supports resources/read, fetch the MCP resource named \`${resourceName}\` (URL: ${perGuideUrl}) and evaluate the best way to install and configure this provider alongside the OpenFeature ${guide} SDK.`
+        );
+      } else {
+        providerPrompts.push(
+          `- **${providerName}**: Read the provider documentation from this link: ${perGuideUrl} and evaluate the best way to install and configure this provider alongside the OpenFeature ${guide} SDK.`
+        );
+      }
     } else {
       providerPrompts.push(
         `- **${providerName}**: No specific ${guide} documentation URL found. Search for "${providerName} OpenFeature ${guide}" installation documentation and provide installation instructions if available.`
@@ -123,6 +131,8 @@ export function registerInstallTools(
             type: "text" as const,
             text: finalText,
           },
+          // Include resource links for any available provider docs so clients can read them directly
+          ...buildProviderResourceLinks(providers, guide),
         ],
       };
     }

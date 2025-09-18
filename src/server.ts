@@ -5,6 +5,7 @@ import type { ToolAnnotations } from "@modelcontextprotocol/sdk/types.js";
 import { registerInstallTools } from "./tools/installTools.js";
 import type { OpenFeatureMCPServerInstance, ToolResult } from "./types.js";
 import packageJson from "../package.json" with { type: "json" };
+import { registerProviderResources } from "./resources.js";
 
 function handleToolError(error: unknown, toolName: string): ToolResult {
   const errorMessage =
@@ -60,6 +61,10 @@ export function createServer(): McpServer {
   };
 
   registerInstallTools(serverAdapter);
+
+  if (process.env.ENABLE_RESOURCE_LINKS) {
+    registerProviderResources(server);
+  }
 
   return server;
 }

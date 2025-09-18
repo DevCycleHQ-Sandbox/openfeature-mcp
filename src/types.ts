@@ -25,8 +25,18 @@ export interface OpenFeatureMCPServerInstance {
  * Standard MCP tool result shape used by this worker
  */
 export type ToolResult = {
-  content: Array<{
-    type: "text";
-    text: string;
-  }>;
+  content: Array<
+    | {
+        type: "text";
+        text: string;
+      }
+    | {
+        type: "resource_link";
+        uri: string;
+        name: string;
+        title?: string;
+        description?: string;
+        mimeType?: string;
+      }
+  >;
 };
