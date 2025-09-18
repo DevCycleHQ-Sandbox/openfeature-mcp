@@ -61,6 +61,7 @@ Or add via Xcode: File > Add Packages... and use `https://github.com/open-featur
 - [ ] Project builds after dependency resolution
 </verification_checkpoint>
 
+<!-- PROVIDERS:START -->
 ### Step 2: Initialize OpenFeature with a provider
 
 Initialize OpenFeature early in app startup and set a provider. Replace `CustomProvider()` with a real provider from the OpenFeature ecosystem when ready. Prefer awaiting readiness before evaluating any flags.
@@ -88,6 +89,7 @@ struct MyApp: App {
   }
 }
 ```
+<!-- PROVIDERS:END -->
 
 <verification_checkpoint>
 **Verify before continuing:**

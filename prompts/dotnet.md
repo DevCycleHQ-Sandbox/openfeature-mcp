@@ -51,6 +51,7 @@ dotnet add package OpenFeature
 - [ ] Project builds after restore
 </verification_checkpoint>
 
+<!-- PROVIDERS:START -->
 ### Step 2: Set up OpenFeature with the example in-memory provider
 
 Initialize early and set the example in-memory provider. Replace with a real provider from the OpenFeature ecosystem when ready.
@@ -97,6 +98,7 @@ public class Program
   }
 }
 ```
+<!-- PROVIDERS:END -->
 
 <verification_checkpoint>
 **Verify before continuing:**

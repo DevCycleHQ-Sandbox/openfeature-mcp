@@ -66,6 +66,7 @@ Peer dependencies (already present in most NestJS apps): `@nestjs/common`, `@nes
 - [ ] `package.json` updated with dependencies
 </verification_checkpoint>
 
+<!-- PROVIDERS:START -->
 ### Step 2: Set up OpenFeature with the example InMemoryProvider
 
 Register the OpenFeature module in your root `AppModule` and configure an example in-memory flag to verify the wiring.
@@ -89,6 +90,7 @@ import { OpenFeatureModule, InMemoryProvider } from '@openfeature/nestjs-sdk';
 })
 export class AppModule {}
 ```
+<!-- PROVIDERS:END -->
 
 <verification_checkpoint>
 **Verify before continuing:**

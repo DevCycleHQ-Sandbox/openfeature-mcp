@@ -65,6 +65,7 @@ dependencies {
 - [ ] Project sync or build succeeds without OpenFeature import errors
 </verification_checkpoint>
 
+<!-- PROVIDERS:START -->
 ### Step 2: Initialize OpenFeature with a provider
 
 Initialize OpenFeature early in app startup and set a provider. Replace `MyProvider()` with a real provider later.
@@ -88,6 +89,7 @@ fun initializeOpenFeature(scope: CoroutineScope) {
   }
 }
 ```
+<!-- PROVIDERS:END -->
 
 <verification_checkpoint>
 **Verify before continuing:**

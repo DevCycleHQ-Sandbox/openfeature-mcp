@@ -54,6 +54,7 @@ composer require open-feature/sdk
 - [ ] Autoloader configured (`vendor/autoload.php`)
 </verification_checkpoint>
 
+<!-- PROVIDERS:START -->
 ### Step 2: Initialize OpenFeature
 
 Initialize OpenFeature early in application startup. If you have a provider, set it before creating a client.
@@ -69,6 +70,7 @@ $client = $api->getClient('my-app');
 
 $enabled = $client->getBooleanValue('new-message', false);
 ```
+<!-- PROVIDERS:END -->
 
 <verification_checkpoint>
 **Verify before continuing:**
