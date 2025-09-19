@@ -62,9 +62,7 @@ export function createServer(): McpServer {
 
   registerInstallTools(serverAdapter);
 
-  if (process.env.ENABLE_RESOURCE_LINKS) {
-    registerProviderResources(server);
-  }
+  registerProviderResources(server);
 
   return server;
 }

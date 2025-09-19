@@ -1,87 +1,110 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { PROVIDER_DOCS } from "./tools/providersBundle.generated.js";
+import { ResourceTemplate } from "@modelcontextprotocol/sdk/server/mcp.js";
+import {
+  providerSchema,
+  PROVIDERS,
+  PROVIDER_DOCS,
+  type ProviderName,
+} from "./tools/providersBundle.generated.js";
+import {
+  InstallGuideSchema,
+  INSTALL_GUIDES,
+  type InstallGuide,
+} from "./tools/promptsBundle.generated.js";
 import type { ToolResult } from "./types.js";
+import { z } from "zod";
+
+export const ENABLE_RESOURCE_LINKS =
+  process.env.ENABLE_RESOURCE_LINKS &&
+  (process.env.ENABLE_RESOURCE_LINKS === "true" ||
+    process.env.ENABLE_RESOURCE_LINKS === "1");
+
+const TemplateVarsSchema = z.object({
+  provider: providerSchema,
+  language: InstallGuideSchema,
+});
+
+function resourceName(providerName: string, guide: string): string {
+  return `of-provider-doc:${providerName}:${guide}`;
+}
 
 export function registerProviderResources(server: McpServer): void {
-  // Register provider documentation links as MCP resources (HTTPS URIs)
-  try {
-    for (const [providerName, guides] of Object.entries(PROVIDER_DOCS)) {
-      for (const [guide, href] of Object.entries(guides)) {
-        const uri = href;
-        const name = `of-provider-doc:${providerName}:${guide}`;
-
-        server.registerResource(
-          name,
-          uri,
-          {
-            title: `${providerName} ${guide} OpenFeature Provider Documentation`,
-            description: `Documentation link for ${providerName} ${guide} OpenFeature Provider.`,
-          },
-          async () => {
-            try {
-              const res = await fetch(uri);
-              if (!res.ok) {
-                return {
-                  contents: [
-                    {
-                      uri,
-                      mimeType: "text/plain",
-                      text: `Failed to fetch provider docs: ${res.status} ${res.statusText}`,
-                    },
-                  ],
-                };
-              }
-              const mime = res.headers.get("content-type") || "text/html";
-              const text = await res.text();
-              return {
-                contents: [
-                  {
-                    uri,
-                    mimeType: mime,
-                    text,
-                  },
-                ],
-              };
-            } catch (err) {
-              return {
-                contents: [
-                  {
-                    uri,
-                    mimeType: "text/plain",
-                    text: `Error fetching provider docs: ${String(err)}`,
-                  },
-                ],
-              };
-            }
-          }
-        );
-      }
-    }
-  } catch (e) {
-    console.error("Failed to register provider resources", e);
+  if (!ENABLE_RESOURCE_LINKS) {
+    return;
   }
+
+  // Register a single Resource Template for provider docs: openfeature+doc://{provider}/{language}
+  const template = new ResourceTemplate(
+    "openfeature+doc://{provider}/{language}",
+    {
+      list: undefined,
+      complete: {
+        provider: async (value: string) =>
+          PROVIDERS.filter((p) =>
+            p.toLowerCase().includes((value || "").toLowerCase())
+          ),
+        language: async (value: string) =>
+          INSTALL_GUIDES.filter((l) =>
+            l.toLowerCase().includes((value || "").toLowerCase())
+          ),
+      },
+    }
+  );
+
+  server.registerResource(
+    "openfeature_provider_doc",
+    template,
+    {
+      title: "OpenFeature Provider Docs",
+      description:
+        "Template for OpenFeature provider docs by provider and language.",
+    },
+    (_uri, variables) => {
+      const { provider, language } = TemplateVarsSchema.parse({
+        provider: variables.provider,
+        language: variables.language,
+      });
+
+      const href = PROVIDER_DOCS[provider]?.[language];
+      if (!href) {
+        return {
+          contents: [
+            {
+              uri: `openfeature+doc://${provider}/${language}`,
+              mimeType: "text/plain",
+              text: `No documentation mapping found for provider='${provider}' language='${language}'.`,
+            },
+          ],
+        };
+      }
+
+      return {
+        contents: [
+          {
+            uri: href,
+            mimeType: "text/uri-list",
+            text: href,
+          },
+        ],
+      };
+    }
+  );
 }
 
 export function buildProviderResourceLinks(
-  providers: readonly string[],
-  guide: string
+  providers: readonly ProviderName[],
+  guide: InstallGuide
 ): ToolResult["content"] {
+  if (!ENABLE_RESOURCE_LINKS) {
+    return [];
+  }
+
   return providers
+    .filter((providerName) => !!PROVIDER_DOCS[providerName]?.[guide])
     .map((providerName) => ({
-      providerName,
-      href: (
-        PROVIDER_DOCS as Record<string, Record<string, string> | undefined>
-      )[providerName]?.[guide] as string | undefined,
-    }))
-    .filter((x) => !!x.href)
-    .map(({ providerName, href }) => ({
-      type: "resource_link" as const,
-      uri: href as string,
-      name: `of-provider-doc:${providerName}:${guide}`,
+      type: "resource_link",
+      uri: `openfeature+doc://${providerName}/${guide}`,
+      name: resourceName(providerName, guide),
       title: `${providerName} ${guide} OpenFeature Provider Documentation`,
-      description: `Documentation link for ${providerName} ${guide} OpenFeature Provider.`,
-      mimeType: "text/html",
     }));
 }
-
-// Web resource templates not required when registering concrete HTTPS provider docs above.

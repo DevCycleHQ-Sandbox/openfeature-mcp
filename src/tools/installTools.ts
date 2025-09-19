@@ -39,16 +39,20 @@ function buildProviderPrompts(
       if (process.env.ENABLE_RESOURCE_LINKS) {
         const resourceName = `of-provider-doc:${providerName}:${guide}`;
         providerPrompts.push(
-          `- **${providerName}**: A resource is provided below. If your host supports resources/read, fetch the MCP resource named \`${resourceName}\` (URL: ${perGuideUrl}) and evaluate the best way to install and configure this provider alongside the OpenFeature ${guide} SDK.`
+          `- **${providerName}**: If your AI Agent supports MCP resources, fetch the MCP resource named \`${resourceName}\` ` +
+            `(otherwise read the documentation from this link: ${perGuideUrl}) ` +
+            `and evaluate the best way to install and configure this provider alongside the OpenFeature ${guide} SDK.`
         );
       } else {
         providerPrompts.push(
-          `- **${providerName}**: Read the provider documentation from this link: ${perGuideUrl} and evaluate the best way to install and configure this provider alongside the OpenFeature ${guide} SDK.`
+          `- **${providerName}**: Read the provider documentation from this link: ${perGuideUrl} ` +
+            `and evaluate the best way to install and configure this provider alongside the OpenFeature ${guide} SDK.`
         );
       }
     } else {
       providerPrompts.push(
-        `- **${providerName}**: No specific ${guide} documentation URL found. Search for "${providerName} OpenFeature ${guide}" installation documentation and provide installation instructions if available.`
+        `- **${providerName}**: No specific ${guide} documentation URL found. Search for "${providerName} OpenFeature ${guide}" ` +
+          `installation documentation and provide installation instructions if available.`
       );
     }
   }
