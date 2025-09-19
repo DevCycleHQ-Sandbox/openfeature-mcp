@@ -59,6 +59,7 @@ gem install openfeature-sdk
 - [ ] `Gemfile`/lockfile updated (if using bundler)
 </verification_checkpoint>
 
+<!-- PROVIDERS:START -->
 ### Step 2: Initialize OpenFeature with the example in-memory provider
 
 Initialize OpenFeature early in application startup and set the example in-memory provider. Replace with a real provider from the OpenFeature ecosystem when ready.
@@ -80,6 +81,7 @@ client = OpenFeature::SDK.build_client('my-app')
 # Example evaluation without additional context
 enabled = client.fetch_boolean_value(flag_key: 'new-message', default_value: false)
 ```
+<!-- PROVIDERS:END -->
 
 <verification_checkpoint>
 **Verify before continuing:**

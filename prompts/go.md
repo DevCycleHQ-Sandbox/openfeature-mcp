@@ -53,6 +53,7 @@ go get github.com/open-feature/go-sdk
 - [ ] `go.mod` updated with `github.com/open-feature/go-sdk`
 </verification_checkpoint>
 
+<!-- PROVIDERS:START -->
 ### Step 2: Set up OpenFeature with the example in-memory provider
 
 Initialize OpenFeature early in application startup and set the example in-memory provider.
@@ -91,6 +92,7 @@ func main() {
     _, _ = client.BooleanValue(context.Background(), "new-message", false, openfeature.EvaluationContext{})
 }
 ```
+<!-- PROVIDERS:END -->
 
 <verification_checkpoint>
 **Verify before continuing:**

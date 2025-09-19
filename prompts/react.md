@@ -65,6 +65,7 @@ pnpm add @openfeature/react-sdk @openfeature/web-sdk @openfeature/core
 - [ ] `package.json` updated with dependencies
 </verification_checkpoint>
 
+<!-- PROVIDERS:START -->
 ### Step 2: Set up OpenFeature with the example InMemoryProvider
 
 Initialize OpenFeature early and set the example in-memory provider.
@@ -104,6 +105,7 @@ function App() {
 
 export default App;
 ```
+<!-- PROVIDERS:END -->
 
 Note: You do not need to await provider initialization; the React SDK will handle re-rendering and suspense when the provider is ready [OpenFeature React SDK](https://openfeature.dev/docs/reference/technologies/client/web/react).
 

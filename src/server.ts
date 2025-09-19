@@ -1,12 +1,23 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import type { ZodRawShape } from "zod";
-import type { ToolAnnotations } from "@modelcontextprotocol/sdk/types.js";
-import { workerVersion } from "./version.js";
+import type { CallToolResult, ToolAnnotations } from "@modelcontextprotocol/sdk/types.js";
 import { registerInstallTools } from "./tools/installTools.js";
-import type { OpenFeatureMCPServerInstance, ToolResult } from "./types.js";
+import packageJson from "../package.json" with { type: "json" };
+import { registerProviderResources } from "./resources.js";
 
-function handleToolError(error: unknown, toolName: string): ToolResult {
+export type RegisterToolWithErrorHandling = (
+  name: string,
+  config: {
+    description: string;
+    annotations?: ToolAnnotations;
+    inputSchema?: ZodRawShape;
+    outputSchema?: ZodRawShape;
+  },
+  handler: (args: unknown) => Promise<CallToolResult>
+) => void;
+
+function handleToolError(error: unknown, toolName: string): CallToolResult {
   const errorMessage =
     error instanceof Error ? error.message : "Unknown error occurred";
   console.error(`Tool ${toolName} error:`, errorMessage);
@@ -23,24 +34,23 @@ function handleToolError(error: unknown, toolName: string): ToolResult {
 export function createServer(): McpServer {
   const server = new McpServer({
     name: "OpenFeature MCP Server",
-    version: workerVersion,
+    version: packageJson.version,
   });
 
-  const serverAdapter: OpenFeatureMCPServerInstance = {
-    registerToolWithErrorHandling: (
-      name: string,
-      config: {
-        description: string;
-        annotations?: ToolAnnotations;
-        inputSchema?: ZodRawShape;
-        outputSchema?: ZodRawShape;
-      },
-      handler: (args: unknown) => Promise<ToolResult>
-    ) => {
+  const registerToolWithErrorHandling = (
+    name: string,
+    config: {
+      description: string;
+      annotations?: ToolAnnotations;
+      inputSchema?: ZodRawShape;
+      outputSchema?: ZodRawShape;
+    },
+    handler: (args: unknown) => Promise<CallToolResult>
+  ): void => {
       const toolHandler = async (
         args: { [x: string]: any },
         _extra: unknown
-      ): Promise<ToolResult> => {
+      ): Promise<CallToolResult> => {
         try {
           console.error("MCP tool invoke", { tool: name, args });
           const result = await handler(args);
@@ -56,10 +66,11 @@ export function createServer(): McpServer {
         config as Parameters<typeof server.registerTool>[1],
         toolHandler as Parameters<typeof server.registerTool>[2]
       );
-    },
   };
 
-  registerInstallTools(serverAdapter);
+  registerInstallTools(registerToolWithErrorHandling);
+
+  registerProviderResources(server);
 
   return server;
 }
@@ -67,7 +78,7 @@ export function createServer(): McpServer {
 export async function startServer(): Promise<void> {
   // Error logs must be used here as stdout is used for MCP protocol messages
   console.error("Initializing OpenFeature MCP local server", {
-    version: workerVersion,
+    version: packageJson.version,
   });
 
   const server = createServer();

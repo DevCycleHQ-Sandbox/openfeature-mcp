@@ -112,12 +112,12 @@ All logs are written to stderr. The MCP protocol messages use stdout.
 
 ### `install_openfeature_sdk`
 
-Fetches and returns OpenFeature SDK install prompt Markdown for a given guide from the bundled prompts.
+Fetches and returns OpenFeature SDK install prompt Markdown for a given technology from the bundled prompts.
 
 **Parameters:**
-- `guide` (string enum): One of the supported guides listed below
+- `technology` (string enum): One of the supported technologies listed below
 
-**Supported Guides (bundled):**
+**Supported Technologies (bundled):
 - android
 - dotnet
 - go

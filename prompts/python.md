@@ -57,6 +57,7 @@ poetry add openfeature-sdk
 - [ ] Virtual environment active (if used)
 </verification_checkpoint>
 
+<!-- PROVIDERS:START -->
 ### Step 2: Initialize OpenFeature with the example in-memory provider
 
 Initialize OpenFeature early in application startup and set the example in-memory provider. Replace with a real provider from the OpenFeature ecosystem when ready.
@@ -79,6 +80,7 @@ client = api.get_client("my-app")
 # Example evaluation without additional context
 enabled = client.get_boolean_value("new-message", False)
 ```
+<!-- PROVIDERS:END -->
 
 <verification_checkpoint>
 **Verify before continuing:**

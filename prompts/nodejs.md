@@ -69,7 +69,8 @@ pnpm add @openfeature/server-sdk @openfeature/core
 - [ ] `package.json` updated with dependencies
 </verification_checkpoint>
 
-### Step 2: Initialize OpenFeature with the example InMemoryProvider
+<!-- PROVIDERS:START -->
+### Step 2: Initialize OpenFeature
 
 Initialize OpenFeature early in server startup and set the example in-memory provider.
 
@@ -92,6 +93,7 @@ const inMemoryProvider = new InMemoryProvider(flagConfig);
 // Prefer awaiting readiness at startup
 await OpenFeature.setProviderAndWait(inMemoryProvider);
 ```
+<!-- PROVIDERS:END -->
 
 <verification_checkpoint>
 **Verify before continuing:**

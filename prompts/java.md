@@ -70,6 +70,7 @@ dependencies {
 - [ ] No dependency conflicts
 </verification_checkpoint>
 
+<!-- PROVIDERS:START -->
 ### Step 2: Initialize OpenFeature with the example in-memory provider
 
 Initialize OpenFeature early in application startup and set the example in-memory provider. Replace with a real provider from the OpenFeature ecosystem when ready.
@@ -105,6 +106,7 @@ public class Main {
   }
 }
 ```
+<!-- PROVIDERS:END -->
 
 <verification_checkpoint>
 **Verify before continuing:**
