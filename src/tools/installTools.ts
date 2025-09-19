@@ -1,8 +1,10 @@
-import { z } from "zod";
-import type { OpenFeatureMCPServerInstance, ToolResult } from "../types.js";
+import { z, type ZodRawShape } from "zod";
+import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
+import type { RegisterToolWithErrorHandling } from "../server.js";
+import { DISABLE_RESOURCES } from "../resources.js";
 import {
   BUNDLED_PROMPTS,
-  InstallGuideSchema,
+  InstallTechnologySchema,
 } from "./promptsBundle.generated.js";
 import {
   PROVIDER_DOCS,
@@ -11,14 +13,14 @@ import {
 } from "./providersBundle.generated.js";
 import { buildProviderResourceLinks } from "../resources.js";
 
-const InstallGuideArgsSchema = z.object({
-  guide: InstallGuideSchema,
+const InstallTechnologyArgsSchema = z.object({
+  technology: InstallTechnologySchema,
   providers: providersSchema.optional().default([]),
 });
 
 function buildProviderPrompts(
   providers: ProviderName[],
-  guide: z.infer<typeof InstallGuideSchema>
+  technology: z.infer<typeof InstallTechnologySchema>
 ): string[] {
   const providerPrompts: string[] = [];
 
@@ -33,25 +35,25 @@ function buildProviderPrompts(
     }
 
     console.error(`providerDocLinks: ${providerDocLinks}`);
-    console.error(`guide: ${guide}`);
-    const perGuideUrl = providerDocLinks[guide] || "";
-    if (perGuideUrl) {
-      if (process.env.ENABLE_RESOURCE_LINKS) {
-        const resourceName = `of-provider-doc:${providerName}:${guide}`;
+    console.error(`technology: ${technology}`);
+    const perTechnologyUrl = providerDocLinks[technology] || "";
+    if (perTechnologyUrl) {
+      if (!DISABLE_RESOURCES) {
+        const resourceName = `of-provider-doc:${providerName}:${technology}`;
         providerPrompts.push(
           `- **${providerName}**: If your AI Agent supports MCP resources, fetch the MCP resource named \`${resourceName}\` ` +
-            `(otherwise read the documentation from this link: ${perGuideUrl}) ` +
-            `and evaluate the best way to install and configure this provider alongside the OpenFeature ${guide} SDK.`
+            `(otherwise read the documentation from this link: ${perTechnologyUrl}) ` +
+            `and evaluate the best way to install and configure this provider alongside the OpenFeature ${technology} SDK.`
         );
       } else {
         providerPrompts.push(
-          `- **${providerName}**: Read the provider documentation from this link: ${perGuideUrl} ` +
-            `and evaluate the best way to install and configure this provider alongside the OpenFeature ${guide} SDK.`
+          `- **${providerName}**: Read the provider documentation from this link: ${perTechnologyUrl} ` +
+            `and evaluate the best way to install and configure this provider alongside the OpenFeature ${technology} SDK.`
         );
       }
     } else {
       providerPrompts.push(
-        `- **${providerName}**: No specific ${guide} documentation URL found. Search for "${providerName} OpenFeature ${guide}" ` +
+        `- **${providerName}**: No specific ${technology} documentation URL found. Search for "${providerName} OpenFeature ${technology}" ` +
           `installation documentation and provide installation instructions if available.`
       );
     }
@@ -63,7 +65,7 @@ function buildProviderPrompts(
 function processPromptWithProviders(
   prompt: string,
   providers: ProviderName[],
-  guide: z.infer<typeof InstallGuideSchema>,
+  technology: z.infer<typeof InstallTechnologySchema>,
   providerPrompts: string[]
 ): string {
   // Marker-based injection: replace the block between markers when providers are specified
@@ -75,7 +77,7 @@ function processPromptWithProviders(
     : "";
 
   const providersAppendix = providerPrompts.length
-    ? `\n\n---\n\nProvider installation instructions for ${guide}:\n\n${providerPrompts.join(
+    ? `\n\n---\n\nProvider installation instructions for ${technology}:\n\n${providerPrompts.join(
         "\n"
       )}`
     : "";
@@ -99,32 +101,32 @@ function processPromptWithProviders(
 }
 
 export function registerInstallTools(
-  serverInstance: OpenFeatureMCPServerInstance
+  registerToolWithErrorHandling: RegisterToolWithErrorHandling
 ): void {
-  serverInstance.registerToolWithErrorHandling(
+  registerToolWithErrorHandling(
     "install_openfeature_sdk",
     {
       description: [
         "Fetch OpenFeature SDK installation instructions, and follow the instructions to install the OpenFeature SDK.",
         "If you are installing a provider, also fetches the provider installation instructions.",
         "Also includes documentation and examples for using OpenFeature SDK in your application.",
-        "Choose the guide that matches the application's language/framework.",
+        "Choose the technology that matches the application's language/framework.",
       ].join(" "),
       annotations: {
         title: "Install OpenFeature SDK",
         readOnlyHint: true,
       },
-      inputSchema: InstallGuideArgsSchema.shape,
+      inputSchema: InstallTechnologyArgsSchema.shape,
     },
-    async (args: unknown): Promise<ToolResult> => {
-      const { guide, providers } = InstallGuideArgsSchema.parse(args);
-      const prompt: string = BUNDLED_PROMPTS[guide];
+    async (args: unknown): Promise<CallToolResult> => {
+      const { technology, providers } = InstallTechnologyArgsSchema.parse(args);
+      const prompt: string = BUNDLED_PROMPTS[technology];
 
-      const providerPrompts = buildProviderPrompts(providers, guide);
+      const providerPrompts = buildProviderPrompts(providers, technology);
       const finalText = processPromptWithProviders(
         prompt,
         providers,
-        guide,
+        technology,
         providerPrompts
       );
       console.error(`install_openfeature_sdk prompt text: \n${finalText}`);
@@ -136,7 +138,7 @@ export function registerInstallTools(
             text: finalText,
           },
           // Include resource links for any available provider docs so clients can read them directly
-          ...buildProviderResourceLinks(providers, guide),
+          ...buildProviderResourceLinks(providers, technology),
         ],
       };
     }

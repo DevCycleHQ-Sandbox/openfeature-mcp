@@ -7,29 +7,35 @@ import {
   type ProviderName,
 } from "./tools/providersBundle.generated.js";
 import {
-  InstallGuideSchema,
-  INSTALL_GUIDES,
-  type InstallGuide,
+  InstallTechnologySchema,
+  INSTALL_TECHNOLOGIES,
+  type InstallTechnology,
 } from "./tools/promptsBundle.generated.js";
-import type { ToolResult } from "./types.js";
+import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
 
-export const ENABLE_RESOURCE_LINKS =
-  process.env.ENABLE_RESOURCE_LINKS &&
-  (process.env.ENABLE_RESOURCE_LINKS === "true" ||
-    process.env.ENABLE_RESOURCE_LINKS === "1");
+export const DISABLE_RESOURCES =
+  process.env.DISABLE_RESOURCES &&
+  (process.env.DISABLE_RESOURCES === "true" ||
+    process.env.DISABLE_RESOURCES === "1");
 
 const TemplateVarsSchema = z.object({
   provider: providerSchema,
-  language: InstallGuideSchema,
+  language: InstallTechnologySchema,
 });
 
-function resourceName(providerName: string, guide: string): string {
-  return `of-provider-doc:${providerName}:${guide}`;
+function resourceName(providerName: string, technology: string): string {
+  return `${providerName} ${technology} OpenFeature Provider Documentation`;
 }
 
+/**
+ * Registers a resource template with the MCP server for OpenFeature provider documentation.
+ * Creates a template that can fetch documentation for different providers and languages from external URLs.
+ * The template uses the URI pattern: openfeature+doc://{provider}/{language}
+ * Runs a simple fetch for the documentation and returns the HTML content.
+ */
 export function registerProviderResources(server: McpServer): void {
-  if (!ENABLE_RESOURCE_LINKS) {
+  if (DISABLE_RESOURCES) {
     return;
   }
 
@@ -44,7 +50,7 @@ export function registerProviderResources(server: McpServer): void {
             p.toLowerCase().includes((value || "").toLowerCase())
           ),
         language: async (value: string) =>
-          INSTALL_GUIDES.filter((l) =>
+          INSTALL_TECHNOLOGIES.filter((l) =>
             l.toLowerCase().includes((value || "").toLowerCase())
           ),
       },
@@ -59,7 +65,7 @@ export function registerProviderResources(server: McpServer): void {
       description:
         "Template for OpenFeature provider docs by provider and language.",
     },
-    (_uri, variables) => {
+    async (_uri, variables) => {
       const { provider, language } = TemplateVarsSchema.parse({
         provider: variables.provider,
         language: variables.language,
@@ -78,33 +84,65 @@ export function registerProviderResources(server: McpServer): void {
         };
       }
 
-      return {
-        contents: [
-          {
-            uri: href,
-            mimeType: "text/uri-list",
-            text: href,
-          },
-        ],
-      };
+      try {
+        const response = await fetch(href);
+        if (!response.ok) {
+          return {
+            contents: [
+              {
+                uri: href,
+                name: resourceName(provider, language),
+                mimeType: "text/plain",
+                text: `Failed to fetch documentation (${response.status} ${response.statusText}) from ${href}.`,
+              },
+            ],
+          };
+        }
+        const body = await response.text();
+        const contentType = response.headers.get("content-type") || "text/html";
+        return {
+          contents: [
+            {
+              uri: href,
+              mimeType: contentType,
+              text: body,
+            },
+          ],
+        };
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        return {
+          contents: [
+            {
+              uri: href,
+              mimeType: "text/plain",
+              text: `Error fetching documentation from ${href}: ${message}`,
+            },
+          ],
+        };
+      }
     }
   );
 }
 
+/**
+ * Builds an array of resource links for the specified providers and install technology.
+ * Filters out providers that don't have documentation available for the given technology.
+ * Returns resource link objects that can be used in tool call results.
+ */
 export function buildProviderResourceLinks(
   providers: readonly ProviderName[],
-  guide: InstallGuide
-): ToolResult["content"] {
-  if (!ENABLE_RESOURCE_LINKS) {
+  technology: InstallTechnology
+): CallToolResult["content"] {
+  if (DISABLE_RESOURCES) {
     return [];
   }
 
   return providers
-    .filter((providerName) => !!PROVIDER_DOCS[providerName]?.[guide])
+    .filter((providerName) => !!PROVIDER_DOCS[providerName]?.[technology])
     .map((providerName) => ({
       type: "resource_link",
-      uri: `openfeature+doc://${providerName}/${guide}`,
-      name: resourceName(providerName, guide),
-      title: `${providerName} ${guide} OpenFeature Provider Documentation`,
+      uri: `openfeature+doc://${providerName}/${technology}`,
+      name: resourceName(providerName, technology),
     }));
 }
