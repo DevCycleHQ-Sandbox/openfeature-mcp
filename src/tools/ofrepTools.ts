@@ -189,10 +189,10 @@ async function callOfrepApi(
   }
 }
 
-export function registerOfrepTools(serverInstance: {
-  registerToolWithErrorHandling: RegisterToolWithErrorHandling;
-}): void {
-  serverInstance.registerToolWithErrorHandling(
+export function registerOfrepTools(
+  registerToolWithErrorHandling: RegisterToolWithErrorHandling
+): void {
+  registerToolWithErrorHandling(
     "ofrep_flag_eval",
     {
       description:

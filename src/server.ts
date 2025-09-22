@@ -72,7 +72,7 @@ export function createServer(): McpServer {
   registerInstallTools(registerToolWithErrorHandling);
 
   registerProviderResources(server);
-  registerOfrepTools({ registerToolWithErrorHandling });
+  registerOfrepTools(registerToolWithErrorHandling);
 
   return server;
 }
