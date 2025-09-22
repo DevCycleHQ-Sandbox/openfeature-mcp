@@ -154,7 +154,7 @@ Auth and base URL resolution (priority):
 Example `~/.openfeature-mcp.json`:
 ```json
 {
-  "ofrep": {
+  "OFREP": {
     "baseUrl": "https://flags.example.com",
     "bearerToken": "<token>",
     "apiKey": "<key>"
