@@ -2,16 +2,13 @@
 
 ## Warning
 
-**This project is in active development and intended for testing only. APIs,
-prompts, and behavior may change without notice. Do not use in production.**
-
-A local Model Context Protocol (MCP) server that provides OpenFeature SDK
-installation guidance over stdio.
+**This project is in active development.**
 
 ## Features
 
-- **No Authentication Required**: Simplified implementation without OAuth or user
-  management
+A local Model Context Protocol (MCP) server that provides OpenFeature SDK
+installation guidance and Open Feature Remote Evaluation Protocol (OFREP) over stdio.
+
 - **OpenFeature SDK Installation Guides**: Fetch installation prompts for various
   OpenFeature SDKs
 - **MCP stdio Transport**: Intended for local usage by MCP-compatible clients
@@ -116,12 +113,16 @@ All logs are written to stderr. The MCP protocol messages use stdout.
 
 ### `install_openfeature_sdk`
 
-Fetches and returns OpenFeature SDK install prompt Markdown for a given
-technology from the bundled prompts.
+Fetches Markdown instructions for installing the OpenFeature SDK for a given
+technology. Optionally augments the prompt with installation guidance for one
+or more feature flag providers.
 
 **Parameters:**
 
 - `technology` (string enum): One of the supported technologies listed below
+- `providers` (string array, optional): Zero or more provider identifiers. If
+  present, adds provider-specific installation notes to the prompt (or removes
+  placeholder sections when empty).
 
 **Supported Technologies**:
 
@@ -137,6 +138,42 @@ technology from the bundled prompts.
 - python
 - react
 - ruby
+
+**Supported Providers**:
+
+The provider list below is sourced automatically from the OpenFeature `open-feature/openfeature.dev`
+repo; newly added providers there become available here without manual edits.
+See `scripts/build-providers.js` for details.
+
+- abtasty
+- awsssm
+- bucketeer
+- cloudbees
+- confidence
+- configbee
+- configcat
+- devcycle
+- env-var
+- featbit
+- flagd
+- flagsmith
+- flipt
+- goff
+- growthbook
+- harness
+- hypertune
+- kameleoon
+- launchdarkly
+- multi-provider
+- ofrep
+- posthog
+- reflag
+- split
+- statsig
+- tggl
+- unleash
+- user-defaults
+- vwo
 
 ### `ofrep_flag_eval`
 
