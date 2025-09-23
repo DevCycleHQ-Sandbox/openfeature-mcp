@@ -126,6 +126,8 @@ or more feature flag providers.
 
 **Supported Technologies**:
 
+The technologies list is build from the avaliable `prompts/*.md`, updated automatically using `scripts/build-prompts.js`
+
 - android
 - dotnet
 - go
@@ -141,39 +143,9 @@ or more feature flag providers.
 
 **Supported Providers**:
 
-The provider list below is sourced automatically from the OpenFeature `open-feature/openfeature.dev`
+The provider list is sourced automatically from the OpenFeature `open-feature/openfeature.dev`
 repo; newly added providers there become available here without manual edits.
 See `scripts/build-providers.js` for details.
-
-- abtasty
-- awsssm
-- bucketeer
-- cloudbees
-- confidence
-- configbee
-- configcat
-- devcycle
-- env-var
-- featbit
-- flagd
-- flagsmith
-- flipt
-- goff
-- growthbook
-- harness
-- hypertune
-- kameleoon
-- launchdarkly
-- multi-provider
-- ofrep
-- posthog
-- reflag
-- split
-- statsig
-- tggl
-- unleash
-- user-defaults
-- vwo
 
 ### `ofrep_flag_eval`
 
