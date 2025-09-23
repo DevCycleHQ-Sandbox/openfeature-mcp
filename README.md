@@ -1,15 +1,19 @@
 # OpenFeature MCP Local Server (stdio)
 
-### Warning
+## Warning
 
-**This project is in active development and intended for testing only. APIs, prompts, and behavior may change without notice. Do not use in production.**
+**This project is in active development and intended for testing only. APIs,
+prompts, and behavior may change without notice. Do not use in production.**
 
-A local Model Context Protocol (MCP) server that provides OpenFeature SDK installation guidance over stdio.
+A local Model Context Protocol (MCP) server that provides OpenFeature SDK
+installation guidance over stdio.
 
 ## Features
 
-- **No Authentication Required**: Simplified implementation without OAuth or user management
-- **OpenFeature SDK Installation Guides**: Fetch installation prompts for various OpenFeature SDKs
+- **No Authentication Required**: Simplified implementation without OAuth or user
+  management
+- **OpenFeature SDK Installation Guides**: Fetch installation prompts for various
+  OpenFeature SDKs
 - **MCP stdio Transport**: Intended for local usage by MCP-compatible clients
 
 ## Configure your AI client (local)
@@ -112,12 +116,15 @@ All logs are written to stderr. The MCP protocol messages use stdout.
 
 ### `install_openfeature_sdk`
 
-Fetches and returns OpenFeature SDK install prompt Markdown for a given technology from the bundled prompts.
+Fetches and returns OpenFeature SDK install prompt Markdown for a given
+technology from the bundled prompts.
 
 **Parameters:**
+
 - `technology` (string enum): One of the supported technologies listed below
 
 **Supported Technologies (bundled):
+
 - android
 - dotnet
 - go
@@ -133,25 +140,39 @@ Fetches and returns OpenFeature SDK install prompt Markdown for a given technolo
 
 ### `ofrep_flag_eval`
 
-Evaluate feature flags via OpenFeature Remote Evaluation Protocol (OFREP). If `flag_key` is omitted, performs bulk evaluation.
+Evaluate feature flags via OpenFeature Remote Evaluation Protocol (OFREP).
+If `flag_key` is omitted, performs bulk evaluation.
 
-References: [`open-feature/protocol` repo](https://github.com/open-feature/protocol), [OFREP OpenAPI spec](https://raw.githubusercontent.com/open-feature/protocol/refs/heads/main/service/openapi.yaml)
+References:
+[`open-feature/protocol` repo](https://github.com/open-feature/protocol),
+[OFREP OpenAPI spec](https://raw.githubusercontent.com/open-feature/protocol/refs/heads/main/service/openapi.yaml)
 
 Parameters (all optional unless noted):
-- `base_url` (string, optional): Base URL of your OFREP-compatible flag service. If omitted, the server uses env/config (see below).
-- `flag_key` (string, optional): If provided, calls single flag evaluation: `/ofrep/v1/evaluate/flags/{key}`. If omitted, calls bulk: `/ofrep/v1/evaluate/flags`.
-- `context` (object, optional): Evaluation context, e.g. `{ "targetingKey": "user-123", ... }`.
-- `etag` (string, optional): For bulk requests, sent as `If-None-Match` to enable 304 caching semantics.
+
+- `base_url` (string, optional): Base URL of your OFREP-compatible flag
+  service. If omitted, the server uses env/config (see below).
+- `flag_key` (string, optional): If provided, calls single flag evaluation:
+  `/ofrep/v1/evaluate/flags/{key}`. If omitted, calls bulk:
+  `/ofrep/v1/evaluate/flags`.
+- `context` (object, optional): Evaluation context, e.g. `{ "targetingKey":
+  "user-123", ... }`.
+- `etag` (string, optional): For bulk requests, sent as `If-None-Match` to
+  enable 304 caching semantics.
 - `auth` (object, optional): Inline auth for this call only.
   - `bearer_token` (string, optional): Sets `Authorization: Bearer <token>`.
   - `api_key` (string, optional): Sets `X-API-Key: <key>`.
 
 Auth and base URL resolution (priority):
+
 1. Tool call args: `base_url`, `auth.bearer_token`, `auth.api_key`
-2. Environment variables: `OPENFEATURE_OFREP_BASE_URL` (or `OFREP_BASE_URL`), `OPENFEATURE_OFREP_BEARER_TOKEN` (or `OFREP_BEARER_TOKEN`), `OPENFEATURE_OFREP_API_KEY` (or `OFREP_API_KEY`)
-3. Config file: `~/.openfeature-mcp.json` (override with `OPENFEATURE_MCP_CONFIG_PATH`)
+2. Environment variables: `OPENFEATURE_OFREP_BASE_URL` (or `OFREP_BASE_URL`),
+   `OPENFEATURE_OFREP_BEARER_TOKEN` (or `OFREP_BEARER_TOKEN`),
+   `OPENFEATURE_OFREP_API_KEY` (or `OFREP_API_KEY`)
+3. Config file: `~/.openfeature-mcp.json` (override with
+   `OPENFEATURE_MCP_CONFIG_PATH`)
 
 Example `~/.openfeature-mcp.json`:
+
 ```json
 {
   "OFREP": {
@@ -163,8 +184,11 @@ Example `~/.openfeature-mcp.json`:
 ```
 
 Notes:
-- Bulk requests may return `ETag`. Pass it back via `etag` to leverage 304 Not Modified.
-- Either bearer token or API key can be supplied; both are supported by the spec.
+
+- Bulk requests may return `ETag`. Pass it back via `etag` to leverage 304 Not
+  Modified.
+- Either bearer token or API key can be supplied; both are supported by the
+  spec.
 
 ## Development
 
@@ -175,23 +199,28 @@ Notes:
 ### Setup
 
 1. Install dependencies:
+
    ```bash
    npm install
    ```
 
-2. Add or edit install guides in the `prompts/` folder (Markdown). These are bundled at build time.
+2. Add or edit install guides in the `prompts/` folder (Markdown). These are
+   bundled at build time.
 
 3. Build prompts bundle:
+
    ```bash
    npm run build-prompts
    ```
 
 4. Build TypeScript:
+
    ```bash
    npm run build
    ```
 
 5. Run locally (binary entrypoint):
+
    ```bash
    node dist/cli.js
    ```
