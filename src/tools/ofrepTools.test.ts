@@ -222,12 +222,12 @@ describe("ofrepTools", () => {
 
   describe("Configuration", () => {
     beforeEach(() => {
-      mockFetch.mockResolvedValue({
-        ok: true,
-        status: 200,
-        headers: { "content-type": "application/json" },
-        json: () => Promise.resolve({ value: true }),
-      });
+      mockFetch.mockResolvedValue(
+        new Response(JSON.stringify({ value: true }), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        })
+      );
     });
 
     it("should prioritize args over env vars", async () => {
