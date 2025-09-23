@@ -123,7 +123,7 @@ technology from the bundled prompts.
 
 - `technology` (string enum): One of the supported technologies listed below
 
-**Supported Technologies (bundled):
+**Supported Technologies**:
 
 - android
 - dotnet
