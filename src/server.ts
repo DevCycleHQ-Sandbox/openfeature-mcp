@@ -5,7 +5,7 @@ import type { CallToolResult, ToolAnnotations } from "@modelcontextprotocol/sdk/
 import { registerInstallTools } from "./tools/installTools.js";
 import packageJson from "../package.json" with { type: "json" };
 import { registerProviderResources } from "./resources.js";
-import { registerOfrepTools } from "./tools/ofrepTools.js";
+import { registerOFREPTools } from "./tools/ofrepTools.js";
 
 export type RegisterToolWithErrorHandling = (
   name: string,
@@ -72,7 +72,7 @@ export function createServer(): McpServer {
   registerInstallTools(registerToolWithErrorHandling);
 
   registerProviderResources(server);
-  registerOfrepTools(registerToolWithErrorHandling);
+  registerOFREPTools(registerToolWithErrorHandling);
 
   return server;
 }

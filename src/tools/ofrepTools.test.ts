@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { registerOfrepTools } from "./ofrepTools.js";
+import { registerOFREPTools } from "./ofrepTools.js";
 import type { RegisterToolWithErrorHandling } from "../server.js";
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 
@@ -36,7 +36,7 @@ describe("ofrepTools", () => {
     tools = mock.tools;
 
     // Register the tools
-    registerOfrepTools(mockRegisterTool);
+    registerOFREPTools(mockRegisterTool);
     toolHandler = tools.get("ofrep_flag_eval").handler;
 
     // Clear fetch mock
@@ -59,12 +59,12 @@ describe("ofrepTools", () => {
     beforeEach(() => {
       process.env.OPENFEATURE_OFREP_BASE_URL = "https://api.example.com";
       process.env.OPENFEATURE_OFREP_BEARER_TOKEN = "test-token";
-      mockFetch.mockResolvedValue({
-        ok: true,
-        status: 200,
-        headers: new Map([["content-type", "application/json"]]),
-        json: () => Promise.resolve({ value: true, reason: "STATIC" }),
-      });
+      mockFetch.mockResolvedValue(
+        new Response(JSON.stringify({ value: true, reason: "STATIC" }), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        })
+      );
     });
 
     it("should accept valid args", async () => {
@@ -94,13 +94,12 @@ describe("ofrepTools", () => {
     });
 
     it("should make correct single flag evaluation request", async () => {
-      mockFetch.mockResolvedValue({
-        ok: true,
-        status: 200,
-        headers: new Map([["content-type", "application/json"]]),
-        json: () =>
-          Promise.resolve({ key: "my-feature", value: true, reason: "STATIC" }),
-      });
+      mockFetch.mockResolvedValue(
+        new Response(
+          JSON.stringify({ key: "my-feature", value: true, reason: "STATIC" }),
+          { status: 200, headers: { "content-type": "application/json" } }
+        )
+      );
 
       await toolHandler({
         flag_key: "my-feature",
@@ -122,15 +121,12 @@ describe("ofrepTools", () => {
     });
 
     it("should make correct bulk evaluation request", async () => {
-      mockFetch.mockResolvedValue({
-        ok: true,
-        status: 200,
-        headers: new Map([
-          ["content-type", "application/json"],
-          ["etag", '"v1.0.0"'],
-        ]),
-        json: () => Promise.resolve({ flags: [] }),
-      });
+      mockFetch.mockResolvedValue(
+        new Response(JSON.stringify({ flags: [] }), {
+          status: 200,
+          headers: { "content-type": "application/json", etag: "v1.0.0" },
+        })
+      );
 
       await toolHandler({
         context: { targetingKey: "user-123" },
@@ -149,12 +145,12 @@ describe("ofrepTools", () => {
     });
 
     it("should include If-None-Match header with etag", async () => {
-      mockFetch.mockResolvedValue({
-        ok: true,
-        status: 200,
-        headers: new Map([["content-type", "application/json"]]),
-        json: () => Promise.resolve({ flags: [] }),
-      });
+      mockFetch.mockResolvedValue(
+        new Response(JSON.stringify({ flags: [] }), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        })
+      );
 
       await toolHandler({
         context: { targetingKey: "user-123" },
@@ -179,19 +175,18 @@ describe("ofrepTools", () => {
     });
 
     it("should handle HTTP errors", async () => {
-      mockFetch.mockResolvedValue({
-        ok: false,
-        status: 404,
-        headers: new Map([["content-type", "application/json"]]),
-        json: () => Promise.resolve({ errorCode: "FLAG_NOT_FOUND" }),
-        text: () => Promise.resolve("Flag not found"),
-      });
+      mockFetch.mockResolvedValue(
+        new Response(JSON.stringify({ errorCode: "FLAG_NOT_FOUND" }), {
+          status: 404,
+          headers: { "content-type": "application/json" },
+        })
+      );
 
       const result = await toolHandler({ flag_key: "nonexistent-flag" });
       const response = JSON.parse(result.content[0].text as string);
 
       expect(response.status).toBe(404);
-      expect(response.error).toBeDefined();
+      expect(response.error.errorCode).toBe("FLAG_NOT_FOUND");
     });
 
     it("should handle network errors", async () => {
@@ -202,6 +197,27 @@ describe("ofrepTools", () => {
 
       expect(response.error).toBe("Connection refused");
     });
+
+    it("should handle 401 errors with detailed JSON response", async () => {
+      mockFetch.mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            error: "Unauthorized",
+            message: "Invalid authentication credentials",
+            code: "INVALID_TOKEN",
+          }),
+          { status: 401, headers: { "content-type": "application/json" } }
+        )
+      );
+
+      const result = await toolHandler({ flag_key: "test-flag" });
+      const response = JSON.parse(result.content[0].text as string);
+
+      expect(response.status).toBe(401);
+      expect(response.error.error).toBe("Unauthorized");
+      expect(response.error.message).toBe("Invalid authentication credentials");
+      expect(response.error.code).toBe("INVALID_TOKEN");
+    });
   });
 
   describe("Configuration", () => {
@@ -209,7 +225,7 @@ describe("ofrepTools", () => {
       mockFetch.mockResolvedValue({
         ok: true,
         status: 200,
-        headers: new Map([["content-type", "application/json"]]),
+        headers: { "content-type": "application/json" },
         json: () => Promise.resolve({ value: true }),
       });
     });
@@ -235,11 +251,7 @@ describe("ofrepTools", () => {
     });
 
     it("should return error when no base URL configured", async () => {
-      const result = await toolHandler({ flag_key: "test-flag" });
-
-      expect(result.content[0].text).toContain(
-        "Missing base_url configuration"
-      );
+      await expect(toolHandler({ flag_key: "test-flag" })).rejects.toThrow();
       expect(mockFetch).not.toHaveBeenCalled();
     });
   });

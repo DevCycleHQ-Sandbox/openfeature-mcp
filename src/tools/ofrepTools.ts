@@ -5,7 +5,7 @@ import { readFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import { resolve } from "node:path";
 
-const OfrepArgsSchema = z.object({
+const OFREPArgsSchema = z.object({
   base_url: z
     .string()
     .url()
@@ -39,24 +39,23 @@ const OfrepArgsSchema = z.object({
     })
     .optional(),
 });
-type OfrepArgs = z.infer<typeof OfrepArgsSchema>;
+type OFREPArgs = z.infer<typeof OFREPArgsSchema>;
 
-const OfrepConfigSchema = z
+const OFREPConfigSchema = z
   .object({
     baseUrl: z.string().min(1),
     bearerToken: z.string().optional(),
-    token: z.string().optional(),
     apiKey: z.string().optional(),
   })
-  .refine((data) => data.bearerToken || data.token || data.apiKey, {
+  .refine((data) => data.bearerToken || data.apiKey, {
     message: "At least one of bearerToken or apiKey must be provided",
     path: ["bearerToken"],
   });
 
 const ConfigFileSchema = z.object({
-  OFREP: OfrepConfigSchema,
+  OFREP: OFREPConfigSchema,
 });
-type OfrepConfig = z.infer<typeof OfrepConfigSchema>;
+type OFREPConfig = z.infer<typeof OFREPConfigSchema>;
 
 async function readConfigFromFile() {
   try {
@@ -74,9 +73,7 @@ async function readConfigFromFile() {
   }
 }
 
-async function resolveConfig(
-  args: OfrepArgs
-): Promise<Required<OfrepConfig> | null> {
+async function resolveConfig(args: OFREPArgs) {
   const envBase =
     process.env.OPENFEATURE_OFREP_BASE_URL ?? process.env.OFREP_BASE_URL;
   const envBearer =
@@ -89,20 +86,10 @@ async function resolveConfig(
 
   const baseUrl = args.base_url ?? envBase ?? fileCfg?.baseUrl;
   const bearerToken =
-    args.auth?.bearer_token ??
-    envBearer ??
-    fileCfg?.bearerToken ??
-    fileCfg?.token;
+    args.auth?.bearer_token ?? envBearer ?? fileCfg?.bearerToken;
   const apiKey = args.auth?.api_key ?? envApiKey ?? fileCfg?.apiKey;
 
-  if (!baseUrl) return null;
-
-  return {
-    baseUrl,
-    bearerToken: bearerToken ?? "",
-    token: "",
-    apiKey: apiKey ?? "",
-  };
+  return OFREPConfigSchema.parse({ baseUrl, bearerToken, apiKey });
 }
 
 function jsonStringifySafe(value: unknown): string {
@@ -116,9 +103,9 @@ function jsonStringifySafe(value: unknown): string {
 /**
  * Calls the OFREP API with the given configuration and arguments.
  */
-async function callOfrepApi(
-  cfg: Required<OfrepConfig>,
-  parsed: OfrepArgs
+async function callOFREPApi(
+  cfg: OFREPConfig,
+  parsed: OFREPArgs
 ): Promise<CallToolResult> {
   const base = cfg.baseUrl.replace(/\/$/, "");
   const isSingle =
@@ -143,6 +130,7 @@ async function callOfrepApi(
   });
 
   try {
+    console.error(`Fetching OFREP API, url: ${url}, body: ${body}`);
     const response = await fetch(url, {
       method: "POST",
       headers,
@@ -155,6 +143,7 @@ async function callOfrepApi(
       response.headers.get("etag") ??
       undefined;
 
+    console.error(`OFREP API response, status: ${response.status}`);
     if (response.status === 304) {
       return {
         content: [
@@ -170,71 +159,67 @@ async function callOfrepApi(
       };
     }
 
-    const contentType = response.headers.get("content-type") ?? "";
-    const data = contentType.includes("application/json")
-      ? await response.json().catch(() => undefined)
-      : await response.text();
+    // Read body once as text, then safely attempt JSON parse
+    const rawText = await response.text().catch(() => undefined);
+    let dataJSON: unknown = undefined;
+    if (typeof rawText === "string" && rawText.length > 0) {
+      try {
+        dataJSON = JSON.parse(rawText);
+      } catch {
+        // not JSON; keep raw text
+      }
+    }
 
     if (!response.ok) {
-      // For error responses, prefer text over empty JSON objects
-      const hasData =
-        (data && typeof data === "string" && data.length > 0) ||
-        (typeof data === "object" &&
-          data !== null &&
-          Object.keys(data).length > 0);
-
-      const errorMessage = hasData
-        ? data
-        : await response.text().catch(() => "");
-
+      const errorMessage = dataJSON ?? rawText;
       const errorData = {
         status: response.status,
         error: errorMessage,
       };
+      console.error(
+        `OFREP API error, status: ${
+          response.status
+        }, error: ${jsonStringifySafe(errorMessage)}`
+      );
       return {
         content: [{ type: "text", text: jsonStringifySafe(errorData) }],
       };
     }
 
     const responseData = isSingle
-      ? { status: 200, data }
-      : { status: 200, etag, data };
+      ? { status: 200, data: dataJSON ?? rawText ?? null }
+      : { status: 200, etag, data: dataJSON ?? rawText ?? null };
+    const jsonResponseData = jsonStringifySafe(responseData);
 
+    console.error(`OFREP API success, status: ${response.status}`);
     return {
-      content: [{ type: "text", text: jsonStringifySafe(responseData) }],
+      content: [{ type: "text", text: jsonResponseData }],
     };
   } catch (err) {
     const errMsg = { error: err instanceof Error ? err.message : String(err) };
-    return { content: [{ type: "text", text: jsonStringifySafe(errMsg) }] };
+    const jsonErrMsg = jsonStringifySafe(errMsg);
+    console.error(`OFREP API error, error: ${jsonErrMsg}`);
+    return { content: [{ type: "text", text: jsonErrMsg }] };
   }
 }
 
-export function registerOfrepTools(
+export function registerOFREPTools(
   registerToolWithErrorHandling: RegisterToolWithErrorHandling
 ): void {
   registerToolWithErrorHandling(
     "ofrep_flag_eval",
     {
-      description:
-        "Evaluate feature flags using OpenFeature Remote Evaluation Protocol (OFREP). If flag_key is omitted, performs bulk evaluation.",
-      inputSchema: OfrepArgsSchema.shape,
+      description: [
+        "Evaluate feature flags using OpenFeature Remote Evaluation Protocol (OFREP).",
+        "If flag_key is omitted, performs bulk evaluation.",
+      ].join("\n"),
+      inputSchema: OFREPArgsSchema.shape,
     },
     async (args: unknown): Promise<CallToolResult> => {
-      const parsed = OfrepArgsSchema.parse(args);
+      const parsed = OFREPArgsSchema.parse(args);
 
       const cfg = await resolveConfig(parsed);
-      if (!cfg) {
-        return {
-          content: [
-            {
-              type: "text",
-              text: "Missing base_url configuration. Provide base_url in args, set OPENFEATURE_OFREP_BASE_URL, or configure ~/.openfeature-mcp.json.",
-            },
-          ],
-        };
-      }
-
-      return await callOfrepApi(cfg, parsed);
+      return await callOFREPApi(cfg, parsed);
     }
   );
 }
