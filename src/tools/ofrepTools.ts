@@ -11,7 +11,7 @@ const OfrepArgsSchema = z.object({
     .url()
     .optional()
     .describe(
-      "Base URL of your OFREP-compatible flag service. must be set directly or via environment variables or config file."
+      "Base URL of your OFREP-compatible flag service. Must be set directly or via environment variables or config file."
     ),
   flag_key: z
     .string()
@@ -49,7 +49,7 @@ const OfrepConfigSchema = z
     apiKey: z.string().optional(),
   })
   .refine((data) => data.bearerToken || data.token || data.apiKey, {
-    message: "At least one of bearerToken, token, or apiKey must be provided",
+    message: "At least one of bearerToken or apiKey must be provided",
     path: ["bearerToken"],
   });
 
