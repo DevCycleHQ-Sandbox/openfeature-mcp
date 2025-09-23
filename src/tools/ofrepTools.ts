@@ -45,10 +45,11 @@ const OfrepConfigSchema = z
   .object({
     baseUrl: z.string().min(1),
     bearerToken: z.string().optional(),
+    token: z.string().optional(),
     apiKey: z.string().optional(),
   })
-  .refine((data) => data.bearerToken || data.apiKey, {
-    message: "At least one of bearerToken, or apiKey must be provided",
+  .refine((data) => data.bearerToken || data.token || data.apiKey, {
+    message: "At least one of bearerToken, token, or apiKey must be provided",
     path: ["bearerToken"],
   });
 
@@ -73,7 +74,9 @@ async function readConfigFromFile() {
   }
 }
 
-async function resolveConfig(args: OfrepArgs) {
+async function resolveConfig(
+  args: OfrepArgs
+): Promise<Required<OfrepConfig> | null> {
   const envBase =
     process.env.OPENFEATURE_OFREP_BASE_URL ?? process.env.OFREP_BASE_URL;
   const envBearer =
@@ -86,14 +89,20 @@ async function resolveConfig(args: OfrepArgs) {
 
   const baseUrl = args.base_url ?? envBase ?? fileCfg?.baseUrl;
   const bearerToken =
-    args.auth?.bearer_token ?? envBearer ?? fileCfg?.bearerToken;
+    args.auth?.bearer_token ??
+    envBearer ??
+    fileCfg?.bearerToken ??
+    fileCfg?.token;
   const apiKey = args.auth?.api_key ?? envApiKey ?? fileCfg?.apiKey;
 
-  return OfrepConfigSchema.parse({
+  if (!baseUrl) return null;
+
+  return {
     baseUrl,
-    bearerToken,
-    apiKey,
-  });
+    bearerToken: bearerToken ?? "",
+    token: "",
+    apiKey: apiKey ?? "",
+  };
 }
 
 function jsonStringifySafe(value: unknown): string {
@@ -108,7 +117,7 @@ function jsonStringifySafe(value: unknown): string {
  * Calls the OFREP API with the given configuration and arguments.
  */
 async function callOfrepApi(
-  cfg: OfrepConfig,
+  cfg: Required<OfrepConfig>,
   parsed: OfrepArgs
 ): Promise<CallToolResult> {
   const base = cfg.baseUrl.replace(/\/$/, "");
@@ -167,9 +176,20 @@ async function callOfrepApi(
       : await response.text();
 
     if (!response.ok) {
+      // For error responses, prefer text over empty JSON objects
+      const hasData =
+        (data && typeof data === "string" && data.length > 0) ||
+        (typeof data === "object" &&
+          data !== null &&
+          Object.keys(data).length > 0);
+
+      const errorMessage = hasData
+        ? data
+        : await response.text().catch(() => "");
+
       const errorData = {
         status: response.status,
-        error: data,
+        error: errorMessage,
       };
       return {
         content: [{ type: "text", text: jsonStringifySafe(errorData) }],
@@ -203,6 +223,17 @@ export function registerOfrepTools(
       const parsed = OfrepArgsSchema.parse(args);
 
       const cfg = await resolveConfig(parsed);
+      if (!cfg) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: "Missing base_url configuration. Provide base_url in args, set OPENFEATURE_OFREP_BASE_URL, or configure ~/.openfeature-mcp.json.",
+            },
+          ],
+        };
+      }
+
       return await callOfrepApi(cfg, parsed);
     }
   );

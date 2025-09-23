@@ -9,7 +9,8 @@
         "start": "node dist/cli.js",
         "build-prompts": "node scripts/build-prompts.js",
         "build-providers": "node scripts/build-providers.js",
-        "prepack": "npm run build"
+        "prepack": "npm run build",
+        "test": "vitest run"
     },
     "bin": {
         "openfeature-mcp": "dist/cli.js"
@@ -28,7 +29,8 @@
     },
     "devDependencies": {
         "@types/node": "^22.13.10",
-        "typescript": "^5.9.2"
+        "typescript": "^5.9.2",
+        "vitest": "^3.2.4"
     },
     "packageManager": "npm@11.4.2"
 }
