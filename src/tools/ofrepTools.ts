@@ -64,9 +64,8 @@ async function readConfigFromFile() {
     const path =
       explicitPath && explicitPath.length > 0 ? explicitPath : defaultPath;
     const file = await readFile(path, { encoding: "utf-8" });
-    const parsed = JSON.parse(file);
 
-    const { OFREP } = ConfigFileSchema.parse(parsed);
+    const { OFREP } = ConfigFileSchema.parse(JSON.parse(file));
     return OFREP;
   } catch {
     return null;
@@ -92,14 +91,6 @@ async function resolveConfig(args: OFREPArgs) {
   return OFREPConfigSchema.parse({ baseUrl, bearerToken, apiKey });
 }
 
-function jsonStringifySafe(value: unknown): string {
-  try {
-    return JSON.stringify(value, null, 2);
-  } catch {
-    return String(value);
-  }
-}
-
 /**
  * Calls the OFREP API with the given configuration and arguments.
  */
@@ -108,9 +99,9 @@ async function callOFREPApi(
   parsed: OFREPArgs
 ): Promise<CallToolResult> {
   const base = cfg.baseUrl.replace(/\/$/, "");
-  const isSingle =
+  const isSingleFlagEval =
     typeof parsed.flag_key === "string" && parsed.flag_key.length > 0;
-  const url = isSingle
+  const url = isSingleFlagEval
     ? `${base}/ofrep/v1/evaluate/flags/${encodeURIComponent(
         parsed.flag_key as string
       )}`
@@ -121,9 +112,14 @@ async function callOFREPApi(
     accept: "application/json",
   };
 
-  if (cfg.bearerToken) headers["authorization"] = `Bearer ${cfg.bearerToken}`;
-  if (cfg.apiKey) headers["X-API-Key"] = cfg.apiKey;
-  if (!isSingle && parsed.etag) headers["If-None-Match"] = parsed.etag;
+  if (cfg.bearerToken) {
+    headers["authorization"] = `Bearer ${cfg.bearerToken}`;
+  } else if (cfg.apiKey) {
+    headers["X-API-Key"] = cfg.apiKey;
+  }
+  if (!isSingleFlagEval && parsed.etag) {
+    headers["If-None-Match"] = parsed.etag;
+  }
 
   const body = JSON.stringify({
     context: parsed.context ?? {},
@@ -149,7 +145,7 @@ async function callOFREPApi(
         content: [
           {
             type: "text",
-            text: jsonStringifySafe({
+            text: JSON.stringify({
               status: 304,
               etag,
               message: "Bulk evaluation not modified",
@@ -176,28 +172,30 @@ async function callOFREPApi(
         status: response.status,
         error: errorMessage,
       };
+      const errorJSON = JSON.stringify(errorData);
       console.error(
-        `OFREP API error, status: ${
-          response.status
-        }, error: ${jsonStringifySafe(errorMessage)}`
+        `OFREP API error, status: ${response.status}, error: ${errorJSON}`
       );
       return {
-        content: [{ type: "text", text: jsonStringifySafe(errorData) }],
+        content: [{ type: "text", text: errorJSON }],
       };
     }
 
-    const responseData = isSingle
-      ? { status: 200, data: dataJSON ?? rawText ?? null }
-      : { status: 200, etag, data: dataJSON ?? rawText ?? null };
-    const jsonResponseData = jsonStringifySafe(responseData);
+    if (!dataJSON) {
+      throw new Error("No JSON data returned from OFREP API");
+    }
+
+    const responseData = isSingleFlagEval
+      ? { status: response.status, data: dataJSON }
+      : { status: response.status, etag, data: dataJSON };
 
     console.error(`OFREP API success, status: ${response.status}`);
     return {
-      content: [{ type: "text", text: jsonResponseData }],
+      content: [{ type: "text", text: JSON.stringify(responseData) }],
     };
   } catch (err) {
     const errMsg = { error: err instanceof Error ? err.message : String(err) };
-    const jsonErrMsg = jsonStringifySafe(errMsg);
+    const jsonErrMsg = JSON.stringify(errMsg);
     console.error(`OFREP API error, error: ${jsonErrMsg}`);
     return { content: [{ type: "text", text: jsonErrMsg }] };
   }
