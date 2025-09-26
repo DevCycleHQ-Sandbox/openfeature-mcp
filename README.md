@@ -1,3 +1,5 @@
+# [Archived: MIGRATED TO OPENFEATURE ORG](https://github.com/open-feature/mcp)
+
 # OpenFeature MCP Local Server (stdio)
 
 ## Warning
